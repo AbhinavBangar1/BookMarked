@@ -1,11 +1,18 @@
 ### Creating Google books api
-1. 
+1. Go to google cloud console 
+2. Navigate to API and Services 
+3. Go to Enabled APIs and Services
+4. Search Google Books API 
+5. Enable it
+6. Go to Credentials -> Create Credentials -> API key
+7. give it a name , Application restrictions : none , API restrictions : Don't restrict key -> create 
+8. copy the api key and add it to the .env file
 
 # Running the app locally
 
 ### 1. Clone the Repo
 ```bash
-git clone https://github.com/AbhinavBangar1/MarketSphere.git
+git clone https://github.com/AbhinavBangar1/BookMarked.git
 ```
 
 ### 2. Check if Node.js is installed
@@ -31,8 +38,15 @@ npm start
 
 # Updating The Repository
 
+## Before working make sure you pull the main branch
 ```bash
-Before Updating the repo Please make sure the code is working fine broken
+git checkout main
+git pull origin main
+git checkout -b <your-branch-name>
+```
+
+```bash
+Before Updating the repo Please make sure the code is working fine
 ```
 
 ### 1. Create your own Branch
@@ -56,7 +70,7 @@ Be Specific with the message
 ```bash 
 git branch
 ```
-# the branch you are will have * before its name 
+the branch you are will have * before its name 
 
 ### 5. push the changes to your own branch
 ```bash
