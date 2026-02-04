@@ -5,25 +5,22 @@ import BookCard from './BookCard.jsx';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
 
-function Section({title ,section_title, type , genre , search }){
+function Section({title ,section_title, type , genre , order }){
     
     const [books,setBooks] = useState([]);
-    let query = "";    
-    if (genre) {
-        query = `subject:${genre}`;
-    } else if (type) {
-        query = type;
-    }
-    else if(title){
-        query = title ;
-    }
-    if (!query) return null; 
-    const URL = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&key=${API_KEY}` ;
     useEffect(()=>{
-        fetch(URL)
+        const param = new URLSearchParams();
+        if(genre) param.append("genre",genre);
+        else if(title) param.append("title",title);
+        else if (type) param.append("type",type);
+        else if (order) param.append("order",order);
+
+        if (![...param].length) return;
+        fetch(`/api/search?${param.toString()}`)
         .then (res => res.json())
-        .then(data => {setBooks(data.items || [])});
-    },[URL]);
+        .then(data => setBooks(data))
+        .catch(err => console.error(err));
+    },[genre, type, title, order]);
 
     return(
         <>

@@ -1,0 +1,104 @@
+/* .searchcard{
+    border: 2px solid red ;
+    display: flex;
+    flex-direction: row;
+    width: 90%;
+    max-width: 720px;
+    height: 10%;
+    margin-left: 5%;
+}
+
+.img-wrapper{
+    border:2px solid black;
+    height: 100%;
+    width: 25%;
+}
+
+.img{
+    border-radius: 50%;
+}
+
+.text-wrapper{
+    border: 2px solid white;
+    display: flex;
+    flex-direction: column;
+}
+
+.text{
+    border: 2px solid green;
+}
+
+.subtext{
+    border: 2px solid orange;
+} */
+
+.searchcard{
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 720px;
+    height: 90px;   /* ← keep this */
+    margin: 0 auto; /* remove side margins */
+    padding: 0.7rem;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255,255,255,0.08);
+    gap: 1rem;
+}
+
+
+.searchcard:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: translateY(-1px);
+}
+
+.img-wrapper{
+    height: 70px;
+    width: 70px;
+    min-width: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+
+.author-placeholder {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    background: teal;
+    color: white;
+    font-weight: bold;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-wrapper{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+}
+
+.text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtext {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
