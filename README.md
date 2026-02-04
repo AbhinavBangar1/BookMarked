@@ -1,0 +1,65 @@
+### Creating Google books api
+1. 
+
+# Running the app locally
+
+### 1. Clone the Repo
+```bash
+git clone https://github.com/AbhinavBangar1/MarketSphere.git
+```
+
+### 2. Check if Node.js is installed
+```bash
+npm -v
+node -v
+```
+
+### 3. Starting Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### 4. Starting Backend Server
+In another Terminal 
+```bash
+cd backend
+npm install
+npm start
+```
+
+# Updating The Repository
+
+```bash
+Before Updating the repo Please make sure the code is working fine broken
+```
+
+### 1. Create your own Branch
+```bash
+git checkout -b <your branch name>
+```
+
+### 2. Add the files to push
+```bash
+git add <filepath>
+```
+
+### 3. Add the commit message 
+```bash
+git commit -m "message here"
+```
+
+Be Specific with the message  
+
+### 4. Check which branch you are in 
+```bash 
+git branch
+```
+# the branch you are will have * before its name 
+
+### 5. push the changes to your own branch
+```bash
+git push origin <your branch name>
+```
+### 6. Create a pull request to merge your branch into main branch

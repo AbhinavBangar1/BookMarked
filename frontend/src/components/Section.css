@@ -1,0 +1,23 @@
+.section-container{
+    border : 2px solid red ;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.section-title{
+    border : 2px solid red ;
+    color: black;
+    font-size: 1.6rem ;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    align-content: flex-start;
+}
+
+.card-container{
+    border : 2px solid red ;
+    display : flex ;
+    overflow-x: scroll;
+    gap : 1.2rem;
+}

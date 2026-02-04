@@ -1,0 +1,60 @@
+.header{
+    display: flex;
+    justify-content: space-between;
+    justify-items: center;
+    align-items: center;
+    /* border: 2px solid red; */
+    position: fixed;
+    top : 0 ;
+    left : 0 ;
+    width: 96vw;
+    height: 9vh;
+    padding-left: 2vw;
+    padding-right: 4vw;
+    margin-bottom: 3vh;
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+    /* background-color: #7FFFD4; */
+    background-color: #008080;
+    z-index: 1000;
+}
+
+.headerleft{
+    /* border: 2px solid red; */
+    display: flex;
+    align-items: center;
+    width: auto;
+    gap : 1rem;
+    vertical-align: middle;
+}
+
+.sitename{
+    /* border : 2px solid red ; */
+    font-size: 2rem;
+    font-weight: bold;
+    /* width: 3vw; */
+    padding-bottom: 0px;    
+}
+
+.booksicon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+}
+
+.headerright{
+    border: 2px solid red;
+    display: flex;
+    align-items: center;
+    gap : 1.5rem;
+    width: auto;
+}
+
+.search,
+.profile , .wishlist-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    cursor: pointer;
+}
+
+

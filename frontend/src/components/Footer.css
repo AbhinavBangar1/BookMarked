@@ -1,0 +1,26 @@
+/* .footer-box{
+    background-color: teal;
+    width : 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+}
+
+.footer-text{
+    border: 2px solid red;
+    margin : 0px ;
+} */
+
+.footer-box{
+    background-color: teal;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+}
+
+.footer-text{
+    margin: 0;
+}
