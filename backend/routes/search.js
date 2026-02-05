@@ -57,7 +57,7 @@ router.get("/specific",async(req,res) => {
         )}&maxResults=30&key=${process.env.GOOGLE_BOOKS_API_KEY}`;
         console.log("Google Books URL:", URL);
         const response = await axios.get(URL);
-        res.json(response.data.items?.slice(0,50) || []);
+        res.json(response.data.items?.slice(0,5) || []);
     }catch(error){
         console.error(error.message)
         res.status(500).json({error:"Failed to fetch"});

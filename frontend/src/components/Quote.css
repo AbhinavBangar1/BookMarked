@@ -1,0 +1,14 @@
+.main-container{
+    border: 2px solid black;
+    display : flex ;
+}
+
+.quote-container{
+    border: 2px solid black;
+    display: flex;
+}
+
+.quote{
+    border: 2px solid black;
+    color: black;
+}
