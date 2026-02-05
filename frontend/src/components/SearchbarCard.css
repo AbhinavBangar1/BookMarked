@@ -1,44 +1,10 @@
-/* .searchcard{
-    border: 2px solid red ;
-    display: flex;
-    flex-direction: row;
-    width: 90%;
-    max-width: 720px;
-    height: 10%;
-    margin-left: 5%;
-}
-
-.img-wrapper{
-    border:2px solid black;
-    height: 100%;
-    width: 25%;
-}
-
-.img{
-    border-radius: 50%;
-}
-
-.text-wrapper{
-    border: 2px solid white;
-    display: flex;
-    flex-direction: column;
-}
-
-.text{
-    border: 2px solid green;
-}
-
-.subtext{
-    border: 2px solid orange;
-} */
-
 .searchcard{
     display: flex;
     align-items: center;
     width: 100%;
     max-width: 720px;
-    height: 90px;   /* ← keep this */
-    margin: 0 auto; /* remove side margins */
+    height: 90px;   
+    margin: 0 auto; 
     padding: 0.7rem;
     border-radius: 12px;
     background: rgba(0, 0, 0, 0.35);
