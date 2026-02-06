@@ -6,7 +6,7 @@ import quoteRoutes from "./routes/quote.js";
 import genreRoutes from "./routes/genre.js"
 
 const app =express();
-const PORT = 5000;
+const PORT = 5001;
 
 app.use(cors())     // allow frontend to use backend 
 app.use(express.json())
