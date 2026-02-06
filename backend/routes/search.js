@@ -1,5 +1,6 @@
 import express from "express";
 import axios from "axios";
+import redisClient from '../redisClient.js'
 
 const router = express.Router();
 
@@ -20,11 +21,20 @@ router.get("/",async(req,res)=>{
         if (!query) {
             return res.status(400).json({ error: "No search query provided" });
         }
+
+        const cacheKey = `${query}`;
+        const cachedSection = await redisClient.get(cacheKey)
+        if (cachedSection){
+            console.log("Found section books in cached ")
+            return res.json(JSON.parse(cachedSection))
+        }
+
         const URL = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
             query
         )}&maxResults=12&key=${process.env.GOOGLE_BOOKS_API_KEY}`;
-
+        console.log("No Cache section books Found . fetching usinf url:" , URL)
         const response = await axios.get(URL);
+        await redisClient.setEx(cacheKey,1200,JSON.stringify(response.data.items))
         res.json(response.data.items?.slice(0,12) || []);
     }catch (error) {
   console.error(error.message);

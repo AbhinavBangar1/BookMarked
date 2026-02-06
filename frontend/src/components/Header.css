@@ -33,7 +33,9 @@
     font-size: 2rem;
     font-weight: bold;
     /* width: 3vw; */
-    padding-bottom: 0px;    
+    padding-bottom: 0px;
+    background-color: teal;
+    border: teal;
 }
 
 .booksicon {

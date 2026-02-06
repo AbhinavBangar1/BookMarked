@@ -1,0 +1,29 @@
+.genre-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #6b21a8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 1.5rem 0;
+    padding-bottom: 0.3rem;
+    border-bottom: 3px solid #0e12df96;
+    display: inline-block;
+    background: linear-gradient(90deg, #63d5c8,aquamarine,teal); 
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.genre-title:hover {
+    transform: translateY(-2px);
+    color: #a855f7; 
+}
+
+.book-container{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+
+}

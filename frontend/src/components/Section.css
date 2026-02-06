@@ -4,6 +4,7 @@
     flex-direction: column;
     gap: 0.75rem;
     margin-bottom: 2.5rem;
+    border:2px solid red;
 }
 
 .section-title {
@@ -16,14 +17,15 @@
 
 
 .card-container {
+    width: 100%;
     display: flex;
     gap: 1.2rem;
-    padding-inline: 3vw;     
+    padding-inline: 1rem;     
     padding-block: 0.5rem;
-    overflow-x: auto;
     scroll-behavior: smooth;
-    width: 100%;
     flex-wrap: wrap;
+    overflow-x: hidden;
+    justify-content: center;
 }
 
 .card-container::-webkit-scrollbar {

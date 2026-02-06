@@ -1,0 +1,26 @@
+.main-result{
+    border: 2px solid red;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.filter-tab{
+    border: 2px solid orange;
+    width: 30%;
+}
+
+.filter-tab-container{
+    border: 2px solid rgb(55, 255, 0);
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-option{
+    border: 2px solid rgb(4, 0, 255);
+}
+
+.result{
+    border: 2px solid rgb(255, 0, 123);
+    width: 100%;
+}
