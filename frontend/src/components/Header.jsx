@@ -17,10 +17,19 @@ function Header() {
 
     const toHome = () => navigate(`/`);
     const toAuth = () => navigate('/auth');
+    const toWishlist = () => navigate('/wishlist'); // ADDED THIS
 
     const handleProfileClick = () => {
         if (user) {
             setShowDropdown(!showDropdown);
+        } else {
+            toAuth();
+        }
+    };
+
+    const handleWishlistClick = () => {  // ADDED THIS FUNCTION
+        if (user) {
+            toWishlist();
         } else {
             toAuth();
         }
@@ -59,7 +68,12 @@ function Header() {
                     </button>
                 </div>
                 <div className='headerright'>
-                    <FaBookBookmark className='wishlist-icon' />
+                    {/* FIXED: Added onClick handler */}
+                    <FaBookBookmark 
+                        className='wishlist-icon' 
+                        onClick={handleWishlistClick}
+                        style={{ cursor: 'pointer' }}
+                    />
                     {isSearchOpen ?
                         <IoClose className='search' onClick={() => setIsSearchOpen(false)} />
                         :
@@ -102,4 +116,3 @@ function Header() {
 }
 
 export default Header;
-
