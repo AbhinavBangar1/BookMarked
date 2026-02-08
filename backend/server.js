@@ -6,6 +6,7 @@ import quoteRoutes from "./routes/quote.js";
 import genreRoutes from "./routes/genre.js"
 import bookRoutes from "./routes/book.js";
 import openLibraryRoutes from "./routes/openlibrary.js";
+import bookmarkRoutes from './routes/bookmark.js';
 const app =express();
 const PORT = 5001;
 
@@ -17,6 +18,7 @@ app.use("/api/quote",quoteRoutes)
 app.use("/api/genre",genreRoutes)
 app.use("/api/book", bookRoutes);
 app.use("/api/openlibrary/book", openLibraryRoutes);
+app.use('/api/bookmark', bookmarkRoutes);
 app.listen(PORT ,()=>{
     console.log(`server running on https://localhost:${PORT}`);
 });

@@ -5,6 +5,7 @@ import Genre from './pages/Genre.jsx';
 import SearchPage from './pages/SearchPage.jsx';
 import BookProfile from './pages/BookProfile.jsx';
 import AuthPage from './pages/AuthPage.jsx';
+import Wishlist from './pages/Wishlist.jsx';
 import { Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
       <Route path="/search" element={<SearchPage />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/book/:id" element={<BookProfile />} /> 
+      <Route path="/wishlist" element={<Wishlist />} />
     </Routes>
   );
 }
