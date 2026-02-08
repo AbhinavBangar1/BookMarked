@@ -2,36 +2,99 @@ import './Header.css'
 import { FaSearch } from "react-icons/fa";
 import { CgProfile } from "react-icons/cg";
 import { IoBookSharp, IoClose } from "react-icons/io5";
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import SearchBar from './SearchBar';
 import { FaBookBookmark } from "react-icons/fa6";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-function Header(){
-    const [isSearchOpen , setIsSearchOpen]= useState(false);
+function Header() {
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
     const navigate = useNavigate();
+    const { user, signOut } = useAuth();
+
     const toHome = () => navigate(`/`);
-    return(
+    const toAuth = () => navigate('/auth');
+
+    const handleProfileClick = () => {
+        if (user) {
+            setShowDropdown(!showDropdown);
+        } else {
+            toAuth();
+        }
+    };
+
+    const handleLogout = async () => {
+        await signOut();
+        setShowDropdown(false);
+        navigate('/');
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Get user initials for avatar
+    const getUserInitials = () => {
+        if (!user?.email) return '?';
+        return user.email.charAt(0).toUpperCase();
+    };
+
+    return (
         <>
             <div className='header'>
                 <div className='headerleft'>
-                    <IoBookSharp className='booksicon'/>
-                    <button className='sitename' onClick={()=> toHome()}> 
+                    <IoBookSharp className='booksicon' />
+                    <button className='sitename' onClick={() => toHome()}>
                         ZReads.
                     </button>
                 </div>
                 <div className='headerright'>
-                    <FaBookBookmark className='wishlist-icon'/>
-                    {isSearchOpen ? 
-                        <IoClose className='search' onClick={() => setIsSearchOpen(false)}/> 
-                        : 
-                        <FaSearch className='search' onClick={() => setIsSearchOpen(true)}/>
+                    <FaBookBookmark className='wishlist-icon' />
+                    {isSearchOpen ?
+                        <IoClose className='search' onClick={() => setIsSearchOpen(false)} />
+                        :
+                        <FaSearch className='search' onClick={() => setIsSearchOpen(true)} />
                     }
-                    <CgProfile className='profile' />
+                    <div className='profile-container' ref={dropdownRef}>
+                        {user ? (
+                            <div
+                                className='user-avatar'
+                                onClick={handleProfileClick}
+                            >
+                                {getUserInitials()}
+                            </div>
+                        ) : (
+                            <CgProfile
+                                className='profile'
+                                onClick={handleProfileClick}
+                            />
+                        )}
+                        {showDropdown && user && (
+                            <div className='profile-dropdown'>
+                                <div className='dropdown-email'>{user.email}</div>
+                                <button
+                                    className='dropdown-logout'
+                                    onClick={handleLogout}
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
-            <SearchBar 
-                isOpen={isSearchOpen} 
+            <SearchBar
+                isOpen={isSearchOpen}
                 onClose={() => setIsSearchOpen(false)}
             />
         </>
@@ -39,3 +102,4 @@ function Header(){
 }
 
 export default Header;
+

@@ -1,12 +1,12 @@
-.header{
+.header {
     display: flex;
     justify-content: space-between;
     justify-items: center;
     align-items: center;
     /* border: 2px solid red; */
     position: fixed;
-    top : 0 ;
-    left : 0 ;
+    top: 0;
+    left: 0;
     width: 96vw;
     height: 9vh;
     padding-left: 2vw;
@@ -19,16 +19,16 @@
     z-index: 1000;
 }
 
-.headerleft{
+.headerleft {
     /* border: 2px solid red; */
     display: flex;
     align-items: center;
     width: auto;
-    gap : 1rem;
+    gap: 1rem;
     vertical-align: middle;
 }
 
-.sitename{
+.sitename {
     /* border : 2px solid red ; */
     font-size: 2rem;
     font-weight: bold;
@@ -44,19 +44,92 @@
     height: 2rem;
 }
 
-.headerright{
+.headerright {
     border: 2px solid red;
     display: flex;
     align-items: center;
-    gap : 1.5rem;
+    gap: 1.5rem;
     width: auto;
 }
 
 .search,
-.profile , .wishlist-icon {
+.profile,
+.wishlist-icon {
     width: 1.8rem;
     height: 1.8rem;
     cursor: pointer;
 }
 
+/* Profile container and dropdown */
+.profile-container {
+    position: relative;
+}
 
+.user-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #20b2aa 0%, #008080 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 128, 128, 0.4);
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    min-width: 200px;
+    overflow: hidden;
+    z-index: 1001;
+    animation: dropdown-fade 0.2s ease;
+}
+
+@keyframes dropdown-fade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-email {
+    padding: 16px;
+    font-size: 0.9rem;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    word-break: break-all;
+}
+
+.dropdown-logout {
+    width: 100%;
+    padding: 14px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 0.95rem;
+    color: #ef4444;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.dropdown-logout:hover {
+    background: #fef2f2;
+}
