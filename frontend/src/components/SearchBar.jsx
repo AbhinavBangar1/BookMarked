@@ -35,12 +35,9 @@ function SearchBar({ isOpen, onClose }) {
         if (activeTab === "books") params.title = query;
         if (activeTab === "author") params.author = query;
 
-        const response = await axios.get("/api/search/specific", {
-          params,
-        });
-
-        setResults(response.data);
-      } catch (error) {
+        const res = await axios.get("/api/search/specific", { params });
+        setResults(res.data || []);
+      } catch {
         setResults([]);
       } finally {
         setLoading(false);
@@ -53,6 +50,7 @@ function SearchBar({ isOpen, onClose }) {
   return (
     <div className="search-overlay" onClick={onClose}>
       <div className="search-container" onClick={(e) => e.stopPropagation()}>
+        {/* ---------- TOP ---------- */}
         <div className="search-top">
           <FiSearch className="search-icon" />
           <input
@@ -68,6 +66,7 @@ function SearchBar({ isOpen, onClose }) {
           </button>
         </div>
 
+        {/* ---------- TABS ---------- */}
         <div className="search-tabs">
           {tabs.map((tab) => (
             <button
@@ -80,6 +79,7 @@ function SearchBar({ isOpen, onClose }) {
           ))}
         </div>
 
+        {/* ---------- RESULTS ---------- */}
         <div className="search-results">
           {loading && <p>Loading...</p>}
 
@@ -87,15 +87,17 @@ function SearchBar({ isOpen, onClose }) {
             <p>No results found for "{query}"</p>
           )}
 
-          {results.map((book, index) => (
+          {results.map((item) => (
             <SearchBarCard
-                key = {book.id}
-                type = {activeTab}
-                data= {book}
+              key={item.id}
+              type={activeTab}
+              data={item}
+              onSelect={onClose}
             />
           ))}
         </div>
 
+        {/* ---------- EMPTY ---------- */}
         {!query && (
           <div className="search-empty">
             <FiSearch className="empty-icon" />

@@ -1,0 +1,206 @@
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import "./BookProfile.css";
+const API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
+
+function BookProfile() {
+  const { id } = useParams();          // 🔑 get book id from URL
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchBook() {
+      try {
+        const res = await fetch(
+          `https://www.googleapis.com/books/v1/volumes/${id}?key=${API_KEY}`
+        );
+        const data = await res.json();
+        setBook(data);
+      } catch (err) {
+        console.error("Failed to fetch book", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchBook();
+  }, [id]);
+
+  if (loading) return <p className="loading">Loading...</p>;
+  if (!book) return <p>Book not found</p>;
+
+  const info = book.volumeInfo;
+
+  return (
+    <>
+      <Header />
+
+      <div className="book-profile">
+        <div className="book-profile-left">
+          <img
+            src={info.imageLinks?.thumbnail}
+            alt={info.title}
+          />
+        </div>
+
+        <div className="book-profile-right">
+          <h1>{info.title}</h1>
+          <p className="author">
+            {info.authors?.join(", ")}
+          </p>
+
+          <p className="description">
+            {info.description || "No description available."}
+          </p>
+
+          <div className="meta">
+            <span>📚 {info.categories?.[0]}</span>
+            <span>📅 {info.publishedDate}</span>
+            <span>⭐ {info.averageRating || "N/A"}</span>
+          </div>
+        </div>
+      </div>
+
+      <Footer />
+    </>
+  );
+}
+
+export default BookProfile;
+
+This is BookProfile 
+
+import './Section.css';
+import { useState, useEffect } from 'react';
+import BookCard from './BookCard.jsx';
+
+function Section({ title, section_title, type, genre, order }) {
+  const [books, setBooks] = useState([]);
+
+  useEffect(() => {
+    const param = new URLSearchParams();
+    if (genre) param.append("genre", genre);
+    else if (title) param.append("title", title);
+    else if (type) param.append("type", type);
+    else if (order) param.append("order", order);
+
+    if (![...param].length) return;
+
+    fetch(`/api/search?${param.toString()}`)
+      .then(res => res.json())
+      .then(data => setBooks(data))
+      .catch(err => console.error(err));
+  }, [genre, type, title, order]);
+
+  return (
+    <div className="section-container">
+      <h3 className="section-title">{section_title}</h3>
+
+      <div className="card-container">
+        {books.map(book => (
+          <BookCard
+            key={book.id}
+            id={book.id}
+            img={book.volumeInfo.imageLinks?.thumbnail}
+            title={book.volumeInfo.title}
+            genre={book.volumeInfo.categories?.[0]}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default Section;
+
+This is Section
+
+import { useState } from 'react';
+import './App.css';
+import Explore from './pages/Explore.jsx';
+import Genre from './pages/Genre.jsx';
+import SearchPage from './pages/SearchPage.jsx';
+import BookProfile from './pages/BookProfile.jsx';
+import { Routes, Route } from 'react-router-dom';
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Explore />} />
+      <Route path="/genre" element={<Genre />} />
+      <Route path="/search" element={<SearchPage />} />
+      <Route path="/book/:id" element={<BookProfile />} /> {/* 🔑 REQUIRED */}
+    </Routes>
+  );
+}
+
+export default App;
+
+
+This is App.jsx
+
+
+import React, { useEffect, useState } from "react";
+import "./Explore.css";
+import Header from '../components/Header.jsx'
+import BookCard from "../components/BookCard.jsx";
+import Footer from "../components/Footer.jsx"
+import Section from "../components/Section.jsx";
+import CategoryBar from "../components/CategoryBar.jsx";
+import Quote from "../components/Quote.jsx";
+
+
+function Explore() {
+    return(
+        <>
+            <Header/>
+            <CategoryBar/>
+            <Quote/>
+            {/* <BookCard title={"My Life"} img={"https://placehold.co/600x400"} genre={"Horror"}/> */}
+            <Section title = {"BestSeller"} section_title={"NewRelease"}/>
+            <Section title = {"Lord Of the Rings"} section_title={"Popular"}/>
+            <Section title = {"Atomic Habits"} section_title={"BestSellers"}/>
+            {/* <Section title={"the cock down the block"} section_title={"Smut"}/> */}
+            <Footer/>
+        </>
+    );
+}
+
+export default Explore;
+
+This is Explore.jsx
+
+
+import './BookCard.css';
+import { BsBookmark } from "react-icons/bs";
+import { Link } from 'react-router-dom';
+
+function BookCard({ id, img, title, genre }) {
+  return (
+    <Link to={`/book/${id}`} className="book-card-link">
+      <div className="book-card">
+        <div className="cover-wrapper">
+          <img src={img} alt={title} />
+          <button
+            className="bookmark-btn"
+            onClick={(e) => e.preventDefault()}
+          >
+            <BsBookmark />
+          </button>
+        </div>
+
+        <div className="book-info">
+          <h3 className="book-title">{title}</h3>
+          <span className="book-genre">{genre}</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+export default BookCard;
+
+
+This is BookCard.jsx
