@@ -1,5 +1,6 @@
 import express from "express";
 import fetch from "node-fetch";
+import redisClient from "../redisClient.js";
 
 const router = express.Router();
 
