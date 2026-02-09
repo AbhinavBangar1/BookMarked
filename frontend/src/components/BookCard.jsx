@@ -9,12 +9,13 @@ function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChang
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
+  // Not needed or wrong logic will see later on ---------------------
   // Check if book is bookmarked when component mounts
-  useEffect(() => {
-    if (user && id) {
-      checkBookmarkStatus();
-    }
-  }, [user, id]);
+  // useEffect(() => {
+  //   if (user && id) {
+  //     checkBookmarkStatus();
+  //   }
+  // }, [user, id]);
 
   const checkBookmarkStatus = async () => {
     try {
@@ -33,7 +34,6 @@ function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChang
     e.stopPropagation();
 
     if (!user) {
-      // Redirect to auth if not logged in
       window.location.href = '/auth';
       return;
     }
@@ -43,11 +43,15 @@ function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChang
     setLoading(true);
 
     try {
+      const token = user.accessToken;
       if (bookmarked) {
         // Remove bookmark
         const response = await fetch(
           `/api/bookmark?userId=${user.id}&bookId=${id}`,
-          { method: 'DELETE' }
+          { method: 'DELETE' ,
+          headers : {
+            Authorization : `Bearer ${token}` }
+          },
         );
 
         if (response.ok) {
@@ -62,6 +66,8 @@ function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChang
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization : `Bearer ${token}`
+
           },
           body: JSON.stringify({
             userId: user.id,

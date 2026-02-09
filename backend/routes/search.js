@@ -31,7 +31,7 @@ router.get("/",async(req,res)=>{
 
         const URL = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
             query
-        )}&maxResults=12&key=${process.env.GOOGLE_BOOKS_API_KEY}`;
+        )}&maxResults=12&orderBy=relevance&key=${process.env.GOOGLE_BOOKS_API_KEY}`;
         console.log("No Cache section books Found . fetching usinf url:" , URL)
         const response = await axios.get(URL);
         await redisClient.setEx(cacheKey,1200,JSON.stringify(response.data.items))

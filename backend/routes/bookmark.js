@@ -1,27 +1,21 @@
 import express from "express";
-import { createClient } from "@supabase/supabase-js";
+import { requireAuth } from "../middleware/requireAuth.js";
 
 const router = express.Router();
 
-// Initialize Supabase client - FIXED to use correct env variable
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY  // Changed from SUPABASE_SERVICE_ROLE_KEY to match your .env
-);
-
 // GET all bookmarks for a user
-router.get("/", async (req, res) => {
+router.get("/", requireAuth ,async (req, res) => {
   try {
-    const { userId } = req.query;
+    const { userId } = req.user.id;
 
     if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
+      return res.status(400).json({ error: "User Not Found" });
     }
 
     const { data, error } = await supabase
       .from("bookmarked")
       .select("*")
-      .eq("userid", userId)  // Changed to lowercase to match your table
+      .eq("userid", userId) 
       .order("createdat", { ascending: false });
 
     if (error) {
@@ -37,9 +31,10 @@ router.get("/", async (req, res) => {
 });
 
 // CHECK if a book is bookmarked by user
-router.get("/check", async (req, res) => {
+router.get("/check", requireAuth , async (req, res) => {
   try {
-    const { userId, bookId } = req.query;
+    const userId = req.user.id;
+    const {bookId} = req.query ;
 
     if (!userId || !bookId) {
       return res.status(400).json({ error: "userId and bookId are required" });
@@ -66,9 +61,10 @@ router.get("/check", async (req, res) => {
 });
 
 // POST add a bookmark
-router.post("/", async (req, res) => {
+router.post("/", requireAuth , async (req, res) => {
   try {
-    const { userId, bookId, title, coverImage, genre } = req.body;
+    const userId = req.user.id ;
+    const { bookId, title, coverImage, genre } = req.body;
 
     if (!userId || !bookId || !title) {
       return res.status(400).json({ 
@@ -122,9 +118,10 @@ router.post("/", async (req, res) => {
 });
 
 // DELETE remove a bookmark
-router.delete("/", async (req, res) => {
+router.delete("/", requireAuth , async (req, res) => {
   try {
-    const { userId, bookId } = req.query;
+    const userId = req.user.id ;
+    const { bookId } = req.query;
 
     if (!userId || !bookId) {
       return res.status(400).json({ 
