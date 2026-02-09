@@ -20,9 +20,6 @@ function BookProfile() {
 
   const statusRef = useRef(null);
 
-  /* =========================
-     FETCH MAIN BOOK
-     ========================= */
   useEffect(() => {
     async function fetchBook() {
       try {
@@ -47,9 +44,7 @@ function BookProfile() {
     fetchBook();
   }, [id]);
 
-  /* =========================
-     NORMALIZE BOOK DATA
-     ========================= */
+
   const info = useMemo(() => {
     if (!book?.data) return null;
 
@@ -91,9 +86,7 @@ function BookProfile() {
         };
   }, [book]);
 
-  /* =========================
-     MORE BOOKS BY AUTHOR
-     ========================= */
+
   useEffect(() => {
     if (!info || info.authors.length === 0 || !book) return;
 
@@ -150,18 +143,13 @@ function BookProfile() {
     fetchMoreBooks();
   }, [info, book]);
 
-  /* =========================
-     SAFE RETURNS
-     ========================= */
+
   if (loading) return <p className="loading">Loading...</p>;
   if (!info) return <p className="loading">Book not found</p>;
 
   const showToggle =
     info.description && info.description.length > 350;
 
-  /* =========================
-     RENDER
-     ========================= */
   return (
     <>
       <Header />
