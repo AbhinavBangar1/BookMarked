@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FcGoogle } from 'react-icons/fc';
@@ -19,10 +20,11 @@ function AuthPage() {
     const navigate = useNavigate();
 
     // Redirect if already logged in
+    useEffect(() => {
     if (user) {
         navigate('/');
-        return null;
     }
+}, [user, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
