@@ -1,0 +1,27 @@
+.main{
+    border-top: 1px solid black;
+    border-bottom: 1px solid rgb(0, 0, 0);
+    /* border : 2px solid red ; */
+    margin-bottom: 50px;
+    margin-top: 3vh;
+    display: flex;
+    justify-content: center;
+}
+
+.tab-container{
+    /* border : 2px solid red ; */
+    display: flex;
+    gap: 5vw;
+    flex-wrap: nowrap;
+}
+
+.tab{
+    /* border : 2px solid red ; */
+    padding: 2vh 2vw;
+    font-weight: bold;
+    color: black;
+}
+
+.tab:hover{
+    background-color: rgba(124, 116, 116, 0.233);
+}
