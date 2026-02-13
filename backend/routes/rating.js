@@ -44,6 +44,8 @@ router.get("/", async (req, res) => {
 router.post("/", requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { bookId, rating } = req.body;
+
+  console.log('⭐ Rating POST request:', { userId, bookId, rating });
   
   try {
     const { data, error } = await supabase
@@ -59,9 +61,35 @@ router.post("/", requireAuth, async (req, res) => {
       .single();
     
     if (error) throw error;
+    
+    console.log('✅ Rating saved successfully');
     res.json(data);
   } catch (err) {
     console.error("Rating save failed:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE - Clear user rating
+router.delete("/", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { bookId } = req.query;
+
+  console.log('🗑️ Rating DELETE request:', { userId, bookId });
+  
+  try {
+    const { error } = await supabase
+      .from("rating")
+      .delete()
+      .eq("userid", userId)
+      .eq("bookid", bookId);
+    
+    if (error) throw error;
+    
+    console.log('✅ Rating cleared successfully');
+    res.json({ message: "Rating cleared successfully" });
+  } catch (err) {
+    console.error("Rating delete failed:", err);
     res.status(500).json({ error: err.message });
   }
 });

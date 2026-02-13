@@ -34,6 +34,7 @@ function BookProfile() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [newReview, setNewReview] = useState("");
   const [reviewRating, setReviewRating] = useState(0);
+  const [editingReviewId, setEditingReviewId] = useState(null);
 
   const statusRef = useRef(null);
 
@@ -370,24 +371,44 @@ function BookProfile() {
       try {
         console.log('⭐ Saving rating:', rating);
         
-        const response = await fetch('http://localhost:5001/api/supabase/rating', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({
-            bookId: id,
-            rating: rating
-          })
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to save rating');
+        if (rating === 0) {
+          // Delete rating
+          const response = await fetch(`http://localhost:5001/api/supabase/rating?userId=${currentUserId}&bookId=${id}`, {
+            method: 'DELETE',
+            headers: { 
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to clear rating');
+          }
+          
+          setUserRating(0);
+          console.log('✅ Rating cleared successfully');
+        } else {
+          // Save rating
+          const response = await fetch('http://localhost:5001/api/supabase/rating', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+              bookId: id,
+              rating: rating
+            })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to save rating');
+          }
+          
+          setUserRating(rating);
+          console.log('✅ Rating saved successfully');
         }
-        
-        setUserRating(rating);
         
         // Refresh stats
         const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
@@ -397,8 +418,6 @@ function BookProfile() {
           avgRating: ratingData.avgRating,
           totalRatings: ratingData.count
         }));
-        
-        console.log('✅ Rating saved successfully');
       } catch (err) {
         console.error('Failed to save rating', err);
         alert('Failed to save rating: ' + err.message);
@@ -414,8 +433,14 @@ function BookProfile() {
       try {
         console.log('📝 Submitting review...');
         
-        const res = await fetch('http://localhost:5001/api/supabase/reviews', {
-          method: 'POST',
+        const url = editingReviewId 
+          ? `http://localhost:5001/api/supabase/reviews/${editingReviewId}`
+          : 'http://localhost:5001/api/supabase/reviews';
+        
+        const method = editingReviewId ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+          method: method,
           headers: { 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
@@ -434,20 +459,35 @@ function BookProfile() {
         
         const data = await res.json();
         
-        // Add new review to list
-        setReviews(prev => [data, ...prev]);
+        if (editingReviewId) {
+          // Update existing review in list
+          setReviews(prev => prev.map(r => 
+            r.ReviewId === editingReviewId 
+              ? { ...r, Review: newReview, Rating: reviewRating }
+              : r
+          ));
+        } else {
+          // Add new review to list
+          setReviews(prev => [data, ...prev]);
+        }
         
         // Reset form
         setNewReview("");
         setReviewRating(0);
         setShowReviewForm(false);
+        setEditingReviewId(null);
         
         // Refresh stats
         const reviewRes = await fetch(`http://localhost:5001/api/supabase/reviews/count?bookId=${id}`);
         const reviewData = await reviewRes.json();
+        const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
+        const ratingData = await ratingRes.json();
+        
         setBookStats(prev => ({
           ...prev,
-          totalReviews: reviewData.count
+          totalReviews: reviewData.count,
+          avgRating: ratingData.avgRating,
+          totalRatings: ratingData.count
         }));
         
         console.log('✅ Review submitted successfully');
@@ -456,6 +496,54 @@ function BookProfile() {
         alert('Failed to submit review: ' + err.message);
       }
     });
+  };
+
+  // Handle edit review
+  const handleEditReview = (review) => {
+    setNewReview(review.Review);
+    setReviewRating(review.Rating || 0);
+    setEditingReviewId(review.ReviewId);
+    setShowReviewForm(true);
+  };
+
+  // Handle delete review
+  const handleDeleteReview = async (reviewId) => {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+    
+    try {
+      const res = await fetch(`http://localhost:5001/api/supabase/reviews/${reviewId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to delete review');
+      }
+      
+      // Remove review from list
+      setReviews(prev => prev.filter(r => r.ReviewId !== reviewId));
+      
+      // Refresh stats
+      const reviewRes = await fetch(`http://localhost:5001/api/supabase/reviews/count?bookId=${id}`);
+      const reviewData = await reviewRes.json();
+      const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
+      const ratingData = await ratingRes.json();
+      
+      setBookStats(prev => ({
+        ...prev,
+        totalReviews: reviewData.count,
+        avgRating: ratingData.avgRating,
+        totalRatings: ratingData.count
+      }));
+      
+      console.log('✅ Review deleted successfully');
+    } catch (err) {
+      console.error('Failed to delete review', err);
+      alert('Failed to delete review: ' + err.message);
+    }
   };
 
   if (loading) return <p className="loading">Loading...</p>;
@@ -468,295 +556,334 @@ function BookProfile() {
       <Header />
 
       <div className="book-profile">
-        {/* LEFT */}
-        <div className="book-profile-left">
-          <img
-            src={info.image || "/placeholder-book.png"}
-            alt={info.title}
-          />
+        {/* HERO SECTION - Book Cover + Main Info */}
+        <div className="book-hero">
+          {/* LEFT - Book Cover & Actions */}
+          <div className="book-cover-section">
+            <div className="book-cover-wrapper">
+              <img
+                src={info.image || "/placeholder-book.png"}
+                alt={info.title}
+              />
+            </div>
 
-          <div className="book-actions" ref={statusRef}>
-            <button
-              className="action-box"
-              onClick={() => {
-                if (!isLoggedIn) {
-                  requireLogin(() => {});
-                } else {
-                  setShowStatusDialog(prev => !prev);
-                }
-              }}
-            >
-              {status}
-            </button>
+            <div className="book-actions" ref={statusRef}>
+              <button
+                className="action-box"
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    requireLogin(() => {});
+                  } else {
+                    setShowStatusDialog(prev => !prev);
+                  }
+                }}
+              >
+                {status}
+              </button>
 
-            {showStatusDialog && (
-              <div className="status-dropdown">
-                {["Want to Read", "Currently Reading", "Read"].map(
-                  s => (
-                    <button
-                      key={s}
-                      className="status-item"
-                      onClick={() => handleStatusChange(s)}
+              {showStatusDialog && (
+                <div className="status-dropdown">
+                  {["Want to Read", "Currently Reading", "Read"].map(
+                    s => (
+                      <button
+                        key={s}
+                        className="status-item"
+                        onClick={() => handleStatusChange(s)}
+                      >
+                        {s}
+                      </button>
+                    )
+                  )}
+                </div>
+              )}
+
+              {info?.isbn && (
+                <a
+                  href={`https://www.amazon.com/s?k=${info.isbn}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-box kindle"
+                >
+                  Buy on Amazon
+                </a>
+              )}
+
+              <div className="user-rating">
+                <span className="rate-label">Rate this book</span>
+                <div className="rate-stars">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`rate-star ${
+                        i < userRating ? "active" : ""
+                      }`}
+                      onClick={() => handleRatingClick(i + 1)}
                     >
-                      {s}
-                    </button>
-                  )
+                      ★
+                    </span>
+                  ))}
+                </div>
+                {userRating > 0 && (
+                  <button 
+                    className="clear-rating-btn"
+                    onClick={() => handleRatingClick(0)}
+                  >
+                    Clear rating
+                  </button>
                 )}
               </div>
-            )}
+            </div>
+          </div>
 
-            {info?.isbn && (
-              <a
-                href={`https://www.amazon.com/dp/${info.isbn}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="action-box kindle"
-              >
-                Read on Kindle
-              </a>
-            )}
+          {/* RIGHT - Book Info */}
+          <div className="book-info-section">
+            <h1 className="profile-title">{info.title}</h1>
 
-            <div className="user-rating">
-              <span className="rate-label">Rate this book</span>
-              <div className="rate-stars">
+            <p className="author">
+              {info.authors.join(", ") || "Unknown Author"}
+            </p>
+
+            {/* RATING STATISTICS */}
+            <div className="rating-statistics">
+              <div className="stars">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <span
                     key={i}
-                    className={`rate-star ${
-                      i < userRating ? "active" : ""
+                    className={`star ${
+                      bookStats.avgRating && i < Math.round(bookStats.avgRating)
+                        ? "filled"
+                        : ""
                     }`}
-                    onClick={() => handleRatingClick(i + 1)}
                   >
                     ★
                   </span>
                 ))}
               </div>
+
+              <span className="rating-number">
+                {bookStats.avgRating > 0 ? bookStats.avgRating.toFixed(2) : "N/A"}
+              </span>
+
+              <span className="rating-meta">
+                {bookStats.totalRatings.toLocaleString()} ratings
+              </span>
+              
+              <span className="rating-separator">•</span>
+              
+              <span className="review-meta">
+                {bookStats.totalReviews.toLocaleString()} reviews
+              </span>
             </div>
+
+            {/* DESCRIPTION */}
+            <div
+              className={`description ${
+                expanded ? "expanded" : "collapsed"
+              }`}
+              dangerouslySetInnerHTML={{
+                __html:
+                  info.description || "No description available.",
+              }}
+            />
+
+            {showToggle && (
+              <button
+                className="show-more"
+                onClick={() => setExpanded(!expanded)}
+              >
+                {expanded ? "Show less" : "Show more"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="book-profile-right">
-          <h1 className="profile-title">{info.title}</h1>
-
-          <p className="author">
-            {info.authors.join(", ") || "Unknown Author"}
-          </p>
-
-          {/* RATING STATISTICS */}
-          <div className="rating-statistics">
-            <div className="stars">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`star ${
-                    bookStats.avgRating && i < Math.round(bookStats.avgRating)
-                      ? "filled"
-                      : ""
-                  }`}
-                >
-                  ★
-                </span>
-              ))}
-            </div>
-
-            <span className="rating-number">
-              {bookStats.avgRating > 0 ? bookStats.avgRating.toFixed(2) : "N/A"}
-            </span>
-
-            <span className="rating-meta">
-              {bookStats.totalRatings.toLocaleString()} ratings
-            </span>
+        {/* BOOK DETAILS SECTION */}
+        <div className="book-details-section">
+          <h3 className="section-title">Book Details</h3>
+          <div className="details-grid">
+            {info.pages && (
+              <div className="detail-item">
+                <span className="detail-label">Pages</span>
+                <span className="detail-value">{info.pages}</span>
+              </div>
+            )}
             
-            <span className="rating-separator">•</span>
+            {info.publisher && (
+              <div className="detail-item">
+                <span className="detail-label">Publisher</span>
+                <span className="detail-value">{info.publisher}</span>
+              </div>
+            )}
             
-            <span className="review-meta">
-              {bookStats.totalReviews.toLocaleString()} reviews
-            </span>
-          </div>
-
-          {/* DESCRIPTION */}
-          <div
-            className={`description ${
-              expanded ? "expanded" : "collapsed"
-            }`}
-            dangerouslySetInnerHTML={{
-              __html:
-                info.description || "No description available.",
-            }}
-          />
-
-          {showToggle && (
-            <button
-              className="show-more"
-              onClick={() => setExpanded(!expanded)}
-            >
-              {expanded ? "Show less" : "Show more"}
-            </button>
-          )}
-
-          {/* BOOK DETAILS */}
-          <div className="book-details-section">
-            <h3 className="section-title">Book Details</h3>
-            <div className="details-grid">
-              {info.pages && (
-                <div className="detail-item">
-                  <span className="detail-label">Pages:</span>
-                  <span className="detail-value">{info.pages}</span>
-                </div>
-              )}
-              
-              {info.publisher && (
-                <div className="detail-item">
-                  <span className="detail-label">Publisher:</span>
-                  <span className="detail-value">{info.publisher}</span>
-                </div>
-              )}
-              
-              {info.publishedDate && (
-                <div className="detail-item">
-                  <span className="detail-label">Publication Date:</span>
-                  <span className="detail-value">{info.publishedDate}</span>
-                </div>
-              )}
-              
-              {info.isbn && (
-                <div className="detail-item">
-                  <span className="detail-label">ISBN:</span>
-                  <span className="detail-value">{info.isbn}</span>
-                </div>
-              )}
-              
-              {info.language && (
-                <div className="detail-item">
-                  <span className="detail-label">Language:</span>
-                  <span className="detail-value">{info.language.toUpperCase()}</span>
-                </div>
-              )}
-              
-              {info.categories.length > 0 && (
-                <div className="detail-item full-width">
-                  <span className="detail-label">Genres:</span>
-                  <div className="genres-list">
-                    {info.categories.slice(0, 6).map((g, i) => (
-                      <span key={i} className="genre-tag">
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ABOUT THE AUTHOR */}
-          {authorInfo && (
-            <div className="author-section">
-              <h3 className="section-title">About the Author</h3>
-
-              <div className="author-info">
-                {/* Author Image */}
-                {authorInfo.photos && (
-                  <img
-                    className="author-image"
-                    src={`https://covers.openlibrary.org/a/olid/${authorInfo.key}-L.jpg`}
-                    alt={authorInfo.name}
-                  />
-                )}
-
-                <div className="author-details">
-                  <h4 className="author-name">{authorInfo.name}</h4>
-
-                  <p className="author-meta">
-                    {authorInfo.birth_date}
-                    {authorInfo.death_date && ` – ${authorInfo.death_date}`}
-                  </p>
-
-                  <p className="author-bio">
-                    {authorInfo.bio || "No biography available."}
-                  </p>
+            {info.publishedDate && (
+              <div className="detail-item">
+                <span className="detail-label">Publication Date</span>
+                <span className="detail-value">{info.publishedDate}</span>
+              </div>
+            )}
+            
+            {info.isbn && (
+              <div className="detail-item">
+                <span className="detail-label">ISBN</span>
+                <span className="detail-value">{info.isbn}</span>
+              </div>
+            )}
+            
+            {info.language && (
+              <div className="detail-item">
+                <span className="detail-label">Language</span>
+                <span className="detail-value">{info.language.toUpperCase()}</span>
+              </div>
+            )}
+            
+            {info.categories.length > 0 && (
+              <div className="detail-item full-width">
+                <span className="detail-label">Genres</span>
+                <div className="genres-list">
+                  {info.categories.slice(0, 6).map((g, i) => (
+                    <span key={i} className="genre-tag">
+                      {g}
+                    </span>
+                  ))}
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* ABOUT THE AUTHOR */}
+        {authorInfo && (
+          <div className="author-section">
+            <h3 className="section-title">About the Author</h3>
+
+            <div className="author-info">
+              {authorInfo.photos && (
+                <img
+                  className="author-image"
+                  src={`https://covers.openlibrary.org/a/olid/${authorInfo.key}-L.jpg`}
+                  alt={authorInfo.name}
+                />
+              )}
+
+              <div className="author-details">
+                <h4 className="author-name">{authorInfo.name}</h4>
+
+                <p className="author-meta">
+                  {authorInfo.birth_date}
+                  {authorInfo.death_date && ` – ${authorInfo.death_date}`}
+                </p>
+
+                <p className="author-bio">
+                  {authorInfo.bio || "No biography available."}
+                </p>
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* MORE FROM AUTHOR */}
+        {moreBooks.length > 0 && (
+          <div className="more-books">
+            <h3 className="more-books-title">
+              More books by {info.authors[0]}
+            </h3>
+            <div className="more-books-row">
+              {moreBooks.map(b => (
+                <BookCard
+                  key={b.id}
+                  id={b.id}
+                  img={b.image}
+                  title={b.title}
+                  genre={b.genre}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* RATINGS AND REVIEWS - FULL WIDTH */}
+        <div className="reviews-section">
+          <div className="reviews-header">
+            <h3 className="section-title">Ratings & Reviews</h3>
+            <button 
+              className="write-review-btn"
+              onClick={() => {
+                if (!isLoggedIn) {
+                  requireLogin(() => {});
+                } else {
+                  if (showReviewForm && editingReviewId) {
+                    setNewReview("");
+                    setReviewRating(0);
+                    setEditingReviewId(null);
+                  }
+                  setShowReviewForm(!showReviewForm);
+                }
+              }}
+            >
+              {editingReviewId ? 'Cancel Edit' : (showReviewForm ? 'Cancel' : 'Write a Review')}
+            </button>
+          </div>
+
+          {/* Review Form */}
+          {showReviewForm && (
+            <form className="review-form" onSubmit={handleReviewSubmit}>
+              <div className="review-rating-input">
+                <label>Your Rating:</label>
+                <div className="review-stars">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`review-star ${i < reviewRating ? "active" : ""}`}
+                      onClick={() => setReviewRating(i + 1)}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+              </div>
+              
+              <textarea
+                className="review-textarea"
+                placeholder="Share your thoughts about this book..."
+                value={newReview}
+                onChange={(e) => setNewReview(e.target.value)}
+                required
+              />
+              
+              <button type="submit" className="submit-review-btn">
+                {editingReviewId ? 'Update Review' : 'Submit Review'}
+              </button>
+            </form>
           )}
 
-          {/* RATINGS AND REVIEWS */}
-          <div className="reviews-section">
-            <div className="reviews-header">
-              <h3 className="section-title">Ratings & Reviews</h3>
-              <button 
-                className="write-review-btn"
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    requireLogin(() => {});
-                  } else {
-                    setShowReviewForm(!showReviewForm);
-                  }
-                }}
-              >
-                {showReviewForm ? 'Cancel' : 'Write a Review'}
-              </button>
-            </div>
-
-            {/* Review Form */}
-            {showReviewForm && (
-              <form className="review-form" onSubmit={handleReviewSubmit}>
-                <div className="review-rating-input">
-                  <label>Your Rating:</label>
-                  <div className="review-stars">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <span
-                        key={i}
-                        className={`review-star ${i < reviewRating ? "active" : ""}`}
-                        onClick={() => setReviewRating(i + 1)}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <textarea
-                  className="review-textarea"
-                  placeholder="Share your thoughts about this book..."
-                  value={newReview}
-                  onChange={(e) => setNewReview(e.target.value)}
-                  required
-                />
-                
-                <button type="submit" className="submit-review-btn">
-                  Submit Review
-                </button>
-              </form>
-            )}
-
-            {/* Reviews List */}
-            <div className="reviews-list">
-              {reviews.length === 0 ? (
-                <p className="no-reviews">No reviews yet. Be the first to review!</p>
-              ) : (
-                reviews.map((review) => (
-                  <div key={review.ReviewId} className="review-card">
-                    <div className="review-header">
-                      <span className="reviewer-name">
-                        {review.UserName || "Anonymous User"}
-                      </span>
-                      <div className="review-rating">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <span
-                            key={i}
-                            className={`mini-star ${
-                              review.Rating && i < review.Rating ? "filled" : ""
-                            }`}
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </div>
+          {/* Reviews List */}
+          <div className="reviews-list">
+            {reviews.length === 0 ? (
+              <p className="no-reviews">No reviews yet. Be the first to review!</p>
+            ) : (
+              reviews.map((review) => (
+                <div key={review.ReviewId} className="review-card">
+                  <div className="review-header">
+                    <span className="reviewer-name">
+                      {review.UserName || "Anonymous User"}
+                    </span>
+                    <div className="review-rating">
+                      {review.Rating && Array.from({ length: 5 }).map((_, i) => (
+                        <span
+                          key={i}
+                          className={`mini-star ${
+                            i < review.Rating ? "filled" : ""
+                          }`}
+                        >
+                          ★
+                        </span>
+                      ))}
                     </div>
-                    
-                    <p className="review-text">{review.Review}</p>
-                    
+                  </div>
+                  
+                  <p className="review-text">{review.Review}</p>
+                  
+                  <div className="review-footer">
                     <span className="review-date">
                       {new Date(review.CreatedAt).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -764,31 +891,28 @@ function BookProfile() {
                         day: 'numeric'
                       })}
                     </span>
+                    
+                    {currentUserId === review.UserId && (
+                      <div className="review-actions">
+                        <button 
+                          className="review-action-btn edit"
+                          onClick={() => handleEditReview(review)}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          className="review-action-btn delete"
+                          onClick={() => handleDeleteReview(review.ReviewId)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+              ))
+            )}
           </div>
-
-          {/* MORE BOOKS */}
-          {moreBooks.length > 0 && (
-            <div className="more-books">
-              <h3 className="more-books-title">
-                More books by {info.authors[0]}
-              </h3>
-              <div className="more-books-row">
-                {moreBooks.map(b => (
-                  <BookCard
-                    key={b.id}
-                    id={b.id}
-                    img={b.image}
-                    title={b.title}
-                    genre={b.genre}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
