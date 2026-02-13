@@ -8,11 +8,11 @@ import "./BookProfile.css";
 function BookProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Check if user is logged in
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [authToken, setAuthToken] = useState(null);
 
   const [expanded, setExpanded] = useState(false);
   const [status, setStatus] = useState("Want to Read");
@@ -37,18 +37,58 @@ function BookProfile() {
 
   const statusRef = useRef(null);
 
-  // Check if user is logged in (modify based on your auth implementation)
+  // Check if user is logged in - SUPABASE AUTH
   useEffect(() => {
-    // Replace this with your actual auth check logic
-    const checkAuth = async () => {
+    const checkAuth = () => {
       try {
-        // Example: Check localStorage, session, or call your auth API
-        const token = localStorage.getItem('authToken');
-        const userId = localStorage.getItem('userId');
+        // Find Supabase auth token key (starts with 'sb-' and ends with '-auth-token')
+        const supabaseTokenKey = Object.keys(localStorage).find(
+          key => key.startsWith('sb-') && key.endsWith('-auth-token')
+        );
         
-        if (token && userId) {
-          setIsLoggedIn(true);
-          setCurrentUserId(userId);
+        if (!supabaseTokenKey) {
+          console.log('❌ No Supabase auth token found');
+          return;
+        }
+        
+        // Get the token data (it's stored as JSON array)
+        const tokenData = localStorage.getItem(supabaseTokenKey);
+        
+        if (tokenData) {
+          try {
+            // Parse the JSON array
+            const parsedData = JSON.parse(tokenData);
+            
+            // The actual session object is usually the first or second item
+            let session = null;
+            
+            if (Array.isArray(parsedData)) {
+              // Find the session object in the array
+              session = parsedData.find(item => 
+                item && typeof item === 'object' && item.access_token
+              );
+            } else if (parsedData.access_token) {
+              session = parsedData;
+            }
+            
+            if (session && session.access_token) {
+              setIsLoggedIn(true);
+              setAuthToken(session.access_token);
+              
+              // Get user ID from session
+              if (session.user && session.user.id) {
+                setCurrentUserId(session.user.id);
+              }
+              
+              console.log('✅ Supabase auth found:', {
+                hasToken: true,
+                userId: session.user?.id || 'unknown',
+                tokenPreview: session.access_token.substring(0, 20) + '...'
+              });
+            }
+          } catch (parseErr) {
+            console.error('Failed to parse Supabase token:', parseErr);
+          }
         }
       } catch (err) {
         console.error('Auth check failed', err);
@@ -65,8 +105,8 @@ function BookProfile() {
           id.startsWith("OL") || id.startsWith("works");
 
         const endpoint = isOpenLibrary
-          ? `/api/openlibrary/book/${id}`
-          : `/api/book/${id}`;
+          ? `http://localhost:5001/api/openlibrary/book/${id}`
+          : `http://localhost:5001/api/book/${id}`;
 
         const res = await fetch(endpoint);
         const data = await res.json();
@@ -81,33 +121,33 @@ function BookProfile() {
 
     fetchBook();
   }, [id]);
+
   // Load user's current reading status for this book
-useEffect(() => {
-  if (!isLoggedIn || !id) return;
+  useEffect(() => {
+    if (!isLoggedIn || !id || !authToken) return;
 
-  async function fetchReadingStatus() {
-    try {
-      const token = localStorage.getItem('authToken');
-      const res = await fetch(
-        `http://localhost:5001/api/reading-status/check?bookId=${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
+    async function fetchReadingStatus() {
+      try {
+        const res = await fetch(
+          `http://localhost:5001/api/reading-status/check?bookId=${id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
           }
+        );
+        const data = await res.json();
+        
+        if (data.status) {
+          setStatus(data.status);
         }
-      );
-      const data = await res.json();
-      
-      if (data.status) {
-        setStatus(data.status);
+      } catch (err) {
+        console.error('Failed to fetch reading status', err);
       }
-    } catch (err) {
-      console.error('Failed to fetch reading status', err);
     }
-  }
 
-  fetchReadingStatus();
-}, [isLoggedIn, id]);
+    fetchReadingStatus();
+  }, [isLoggedIn, id, authToken]);
 
   const info = useMemo(() => {
     if (!book?.data) return null;
@@ -157,11 +197,11 @@ useEffect(() => {
     async function fetchBookStats() {
       try {
         // Fetch average rating and count from rating table
-        const ratingRes = await fetch(`/api/supabase/rating?bookId=${id}`);
+        const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
         const ratingData = await ratingRes.json();
         
         // Fetch review count from reviews table
-        const reviewRes = await fetch(`/api/supabase/reviews/count?bookId=${id}`);
+        const reviewRes = await fetch(`http://localhost:5001/api/supabase/reviews/count?bookId=${id}`);
         const reviewData = await reviewRes.json();
         
         setBookStats({
@@ -206,11 +246,13 @@ useEffect(() => {
     async function fetchAuthorInfo() {
       try {
         const authorName = info.authors[0];
-        const res = await fetch(`/api/supabase/author?name=${encodeURIComponent(authorName)}`);
+        const res = await fetch(
+          `http://localhost:5001/api/author?name=${encodeURIComponent(authorName)}`
+        );
         const data = await res.json();
         setAuthorInfo(data);
       } catch (err) {
-        console.error('Failed to fetch author info', err);
+        console.error("Failed to fetch author info", err);
       }
     }
 
@@ -247,7 +289,7 @@ useEffect(() => {
               })) || [];
         } else {
           const res = await fetch(
-            `/api/search?q=inauthor:${encodeURIComponent(author)}`
+            `http://localhost:5001/api/search?q=inauthor:${encodeURIComponent(author)}`
           );
           const data = await res.json();
 
@@ -275,9 +317,11 @@ useEffect(() => {
 
   // Handle login requirement
   const requireLogin = (callback) => {
-    if (!isLoggedIn) {
+    console.log('🔐 requireLogin check:', { isLoggedIn, hasToken: !!authToken });
+    
+    if (!isLoggedIn || !authToken) {
       alert('Please sign in to continue');
-      navigate('/auth'); // Adjust to your login route
+      navigate('/auth');
       return false;
     }
     callback();
@@ -285,68 +329,79 @@ useEffect(() => {
   };
 
   // Handle status change with login check
- const handleStatusChange = (newStatus) => {
-  requireLogin(async () => {
-    try {
-      // Get auth token (adjust based on your auth setup)
-      const token = localStorage.getItem('authToken'); // or however you store it
-      
-      // Save to reading_status table
-      const response = await fetch('http://localhost:5001/api/reading-status', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Add auth header
-        },
-        body: JSON.stringify({
-          bookId: id,
-          status: newStatus,
-          title: info.title,
-          coverImage: info.image,
-          genre: info.categories?.[0]
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update status');
+  const handleStatusChange = (newStatus) => {
+    requireLogin(async () => {
+      try {
+        console.log('📝 Updating status to:', newStatus);
+        
+        const response = await fetch('http://localhost:5001/api/reading-status', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            bookId: id,
+            status: newStatus,
+            title: info.title,
+            coverImage: info.image,
+            genre: info.categories?.[0]
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update status');
+        }
+        
+        setStatus(newStatus);
+        setShowStatusDialog(false);
+        console.log('✅ Status updated successfully');
+      } catch (err) {
+        console.error('Failed to update status', err);
+        alert('Failed to update reading status: ' + err.message);
       }
-      
-      setStatus(newStatus);
-      setShowStatusDialog(false);
-    } catch (err) {
-      console.error('Failed to update status', err);
-      alert('Failed to update reading status');
-    }
-  });
-};
+    });
+  };
 
   // Handle rating with login check
   const handleRatingClick = (rating) => {
     requireLogin(async () => {
       try {
-        // Save to Supabase rating table
-        await fetch('/api/supabase/rating', {
+        console.log('⭐ Saving rating:', rating);
+        
+        const response = await fetch('http://localhost:5001/api/supabase/rating', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
           body: JSON.stringify({
-            UserId: currentUserId,
-            BookId: id,
-            Rating: rating
+            bookId: id,
+            rating: rating
           })
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save rating');
+        }
         
         setUserRating(rating);
         
         // Refresh stats
-        const ratingRes = await fetch(`/api/supabase/ratings?bookId=${id}`);
+        const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
         const ratingData = await ratingRes.json();
         setBookStats(prev => ({
           ...prev,
           avgRating: ratingData.avgRating,
           totalRatings: ratingData.count
         }));
+        
+        console.log('✅ Rating saved successfully');
       } catch (err) {
         console.error('Failed to save rating', err);
+        alert('Failed to save rating: ' + err.message);
       }
     });
   };
@@ -357,17 +412,25 @@ useEffect(() => {
     
     requireLogin(async () => {
       try {
-        // Save to Supabase reviews table
-        const res = await fetch('/api/supabase/reviews', {
+        console.log('📝 Submitting review...');
+        
+        const res = await fetch('http://localhost:5001/api/supabase/reviews', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
           body: JSON.stringify({
-            Review: newReview,
-            UserId: currentUserId,
-            BookId: id,
-            Rating: reviewRating
+            review: newReview,
+            bookId: id,
+            rating: reviewRating
           })
         });
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to submit review');
+        }
         
         const data = await res.json();
         
@@ -380,14 +443,17 @@ useEffect(() => {
         setShowReviewForm(false);
         
         // Refresh stats
-        const reviewRes = await fetch(`/api/supabase/reviews/count?bookId=${id}`);
+        const reviewRes = await fetch(`http://localhost:5001/api/supabase/reviews/count?bookId=${id}`);
         const reviewData = await reviewRes.json();
         setBookStats(prev => ({
           ...prev,
           totalReviews: reviewData.count
         }));
+        
+        console.log('✅ Review submitted successfully');
       } catch (err) {
         console.error('Failed to submit review', err);
+        alert('Failed to submit review: ' + err.message);
       }
     });
   };
@@ -439,9 +505,16 @@ useEffect(() => {
               </div>
             )}
 
-            <button className="action-box kindle">
-              Read on Kindle
-            </button>
+            {info?.isbn && (
+              <a
+                href={`https://www.amazon.com/dp/${info.isbn}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="action-box kindle"
+              >
+                Read on Kindle
+              </a>
+            )}
 
             <div className="user-rating">
               <span className="rate-label">Rate this book</span>
@@ -577,19 +650,32 @@ useEffect(() => {
           </div>
 
           {/* ABOUT THE AUTHOR */}
-          {info.authors.length > 0 && (
+          {authorInfo && (
             <div className="author-section">
               <h3 className="section-title">About the Author</h3>
+
               <div className="author-info">
-                <h4 className="author-name">{info.authors[0]}</h4>
-                {authorInfo?.Details ? (
-                  <p className="author-bio">{authorInfo.Details}</p>
-                ) : (
-                  <p className="author-bio">
-                    {info.authors[0]} is the author of {info.title}
-                    {moreBooks.length > 0 && ` and ${moreBooks.length} other books`}.
-                  </p>
+                {/* Author Image */}
+                {authorInfo.photos && (
+                  <img
+                    className="author-image"
+                    src={`https://covers.openlibrary.org/a/olid/${authorInfo.key}-L.jpg`}
+                    alt={authorInfo.name}
+                  />
                 )}
+
+                <div className="author-details">
+                  <h4 className="author-name">{authorInfo.name}</h4>
+
+                  <p className="author-meta">
+                    {authorInfo.birth_date}
+                    {authorInfo.death_date && ` – ${authorInfo.death_date}`}
+                  </p>
+
+                  <p className="author-bio">
+                    {authorInfo.bio || "No biography available."}
+                  </p>
+                </div>
               </div>
             </div>
           )}

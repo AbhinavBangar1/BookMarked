@@ -34,7 +34,6 @@ router.get("/", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("reviews")
-      //.select("reviewid, review, createdat, userid")
       .select(`
         reviewid,
         review,
@@ -48,13 +47,7 @@ router.get("/", async (req, res) => {
       .order("createdat", { ascending: false });
     
     if (error) throw error;
-  //   const reviews = data.map(review => ({
-  //   ReviewId: review.reviewid,
-  //   Review: review.review,
-  //   CreatedAt: review.createdat,
-  //   UserId: review.userid,
-  //   UserName: "Anonymous"
-  // }));
+
     const reviews = data.map(review => ({
       ReviewId: review.reviewid,
       Review: review.review,
@@ -74,6 +67,8 @@ router.get("/", async (req, res) => {
 router.post("/", requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { review, bookId, rating } = req.body;
+
+  console.log('📝 Review POST request:', { userId, bookId, hasReview: !!review, rating });
   
   try {
     const { data, error } = await supabase
@@ -118,7 +113,8 @@ router.post("/", requireAuth, async (req, res) => {
       UserName: data.users?.username || "Anonymous",
       Rating: rating
     };
-    
+
+    console.log('✅ Review created successfully');
     res.json(reviewResponse);
   } catch (err) {
     console.error("Review create failed:", err);

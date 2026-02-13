@@ -49,6 +49,8 @@ router.post("/", requireAuth, async (req, res) => {
     const userId = req.user.id;
     const { bookId, status, title, coverImage, genre } = req.body;
 
+    console.log('📝 Reading status POST request:', { userId, bookId, status });
+
     if (!userId || !bookId || !status) {
       return res.status(400).json({ 
         error: "userId, bookId, and status are required" 
@@ -82,16 +84,17 @@ router.post("/", requireAuth, async (req, res) => {
 
     if (error) {
       console.error("Supabase upsert error:", error);
-      return res.status(500).json({ error: "Failed to update reading status" });
+      return res.status(500).json({ error: "Failed to update reading status: " + error.message });
     }
 
+    console.log('✅ Reading status updated successfully');
     res.json({ 
       message: "Reading status updated successfully", 
       data: data
     });
   } catch (err) {
     console.error("Reading status update failed:", err);
-    res.status(500).json({ error: "Failed to update reading status" });
+    res.status(500).json({ error: "Failed to update reading status: " + err.message });
   }
 });
 
