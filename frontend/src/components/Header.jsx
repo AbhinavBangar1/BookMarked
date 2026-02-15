@@ -13,11 +13,11 @@ function Header() {
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
-    const { user, signOut } = useAuth();
+    const { user, profile, signOut } = useAuth();
 
     const toHome = () => navigate(`/`);
     const toAuth = () => navigate('/auth');
-    const toWishlist = () => navigate('/wishlist'); // ADDED THIS
+    const toWishlist = () => navigate('/wishlist');
 
     const handleProfileClick = () => {
         if (user) {
@@ -27,7 +27,7 @@ function Header() {
         }
     };
 
-    const handleWishlistClick = () => {  // ADDED THIS FUNCTION
+    const handleWishlistClick = () => {
         if (user) {
             toWishlist();
         } else {
@@ -52,8 +52,11 @@ function Header() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Get user initials for avatar
+    // Get user initials for avatar — prefer username, fallback to email
     const getUserInitials = () => {
+        if (profile?.username) {
+            return profile.username.charAt(0).toUpperCase();
+        }
         if (!user?.email) return '?';
         return user.email.charAt(0).toUpperCase();
     };
@@ -68,9 +71,8 @@ function Header() {
                     </button>
                 </div>
                 <div className='headerright'>
-                    {/* FIXED: Added onClick handler */}
-                    <FaBookBookmark 
-                        className='wishlist-icon' 
+                    <FaBookBookmark
+                        className='wishlist-icon'
                         onClick={handleWishlistClick}
                         style={{ cursor: 'pointer' }}
                     />
@@ -95,6 +97,9 @@ function Header() {
                         )}
                         {showDropdown && user && (
                             <div className='profile-dropdown'>
+                                {profile?.username && (
+                                    <div className='dropdown-username'>{profile.username}</div>
+                                )}
                                 <div className='dropdown-email'>{user.email}</div>
                                 <button
                                     className='dropdown-logout'
