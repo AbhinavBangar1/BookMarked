@@ -3,20 +3,16 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BookCard from "../components/BookCard";
-import { useAuth } from "../context/AuthContext";
-import { supabase } from "../supabaseClient";
 import "./BookProfile.css";
 
 function BookProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [authToken, setAuthToken] = useState(null);
-  const { user, profile } = useAuth();
 
   const [expanded, setExpanded] = useState(false);
   const [status, setStatus] = useState("Want to Read");
@@ -50,41 +46,41 @@ function BookProfile() {
         const supabaseTokenKey = Object.keys(localStorage).find(
           key => key.startsWith('sb-') && key.endsWith('-auth-token')
         );
-        
+
         if (!supabaseTokenKey) {
           console.log('❌ No Supabase auth token found');
           return;
         }
-        
+
         // Get the token data (it's stored as JSON array)
         const tokenData = localStorage.getItem(supabaseTokenKey);
-        
+
         if (tokenData) {
           try {
             // Parse the JSON array
             const parsedData = JSON.parse(tokenData);
-            
+
             // The actual session object is usually the first or second item
             let session = null;
-            
+
             if (Array.isArray(parsedData)) {
               // Find the session object in the array
-              session = parsedData.find(item => 
+              session = parsedData.find(item =>
                 item && typeof item === 'object' && item.access_token
               );
             } else if (parsedData.access_token) {
               session = parsedData;
             }
-            
+
             if (session && session.access_token) {
               setIsLoggedIn(true);
               setAuthToken(session.access_token);
-              
+
               // Get user ID from session
               if (session.user && session.user.id) {
                 setCurrentUserId(session.user.id);
               }
-              
+
               console.log('✅ Supabase auth found:', {
                 hasToken: true,
                 userId: session.user?.id || 'unknown',
@@ -99,11 +95,9 @@ function BookProfile() {
         console.error('Auth check failed', err);
       }
     };
-    
+
     checkAuth();
   }, []);
-
-
 
   useEffect(() => {
     async function fetchBook() {
@@ -131,16 +125,15 @@ function BookProfile() {
 
   // Load user's current reading status for this book
   useEffect(() => {
-    if (!user || !id) return;
+    if (!isLoggedIn || !id || !authToken) return;
 
     async function fetchReadingStatus() {
       try {
-        const token = await getAuthToken();
         const res = await fetch(
           `http://localhost:5001/api/reading-status/check?bookId=${id}`,
           {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${authToken}`
             }
           }
         );
@@ -155,7 +148,7 @@ function BookProfile() {
     }
 
     fetchReadingStatus();
-  }, [user, id]);
+  }, [isLoggedIn, id, authToken]);
 
   const info = useMemo(() => {
     if (!book?.data) return null;
@@ -325,7 +318,9 @@ function BookProfile() {
 
   // Handle login requirement
   const requireLogin = (callback) => {
-    if (!user) {
+    console.log('🔐 requireLogin check:', { isLoggedIn, hasToken: !!authToken });
+
+    if (!isLoggedIn || !authToken) {
       alert('Please sign in to continue');
       navigate('/auth');
       return false;
@@ -338,13 +333,13 @@ function BookProfile() {
   const handleStatusChange = (newStatus) => {
     requireLogin(async () => {
       try {
-        const token = await getAuthToken();
+        console.log('📝 Updating status to:', newStatus);
 
         const response = await fetch('http://localhost:5001/api/reading-status', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify({
             bookId: id,
@@ -356,14 +351,16 @@ function BookProfile() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to update status');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update status');
         }
 
         setStatus(newStatus);
         setShowStatusDialog(false);
+        console.log('✅ Status updated successfully');
       } catch (err) {
         console.error('Failed to update status', err);
-        alert('Failed to update reading status');
+        alert('Failed to update reading status: ' + err.message);
       }
     });
   };
@@ -372,22 +369,46 @@ function BookProfile() {
   const handleRatingClick = (rating) => {
     requireLogin(async () => {
       try {
-        console.log('📝 Updating status to:', newStatus);
-        
-        const response = await fetch('http://localhost:5001/api/reading-status', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({
-            UserId: user.id,
-            BookId: id,
-            Rating: rating
-          })
-        });
+        console.log('⭐ Saving rating:', rating);
 
-        setUserRating(rating);
+        if (rating === 0) {
+          // Delete rating
+          const response = await fetch(`http://localhost:5001/api/supabase/rating?userId=${currentUserId}&bookId=${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to clear rating');
+          }
+
+          setUserRating(0);
+          console.log('✅ Rating cleared successfully');
+        } else {
+          // Save rating
+          const response = await fetch('http://localhost:5001/api/supabase/rating', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+              bookId: id,
+              rating: rating
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to save rating');
+          }
+
+          setUserRating(rating);
+          console.log('✅ Rating saved successfully');
+        }
 
         // Refresh stats
         const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
@@ -411,50 +432,64 @@ function BookProfile() {
     requireLogin(async () => {
       try {
         console.log('📝 Submitting review...');
-        
-        const url = editingReviewId 
+
+        const url = editingReviewId
           ? `http://localhost:5001/api/supabase/reviews/${editingReviewId}`
           : 'http://localhost:5001/api/supabase/reviews';
-        
+
         const method = editingReviewId ? 'PUT' : 'POST';
-        
+
         const res = await fetch(url, {
           method: method,
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify({
-            Review: newReview,
-            UserId: user.id,
-            BookId: id,
-            Rating: reviewRating
+            review: newReview,
+            bookId: id,
+            rating: reviewRating
           })
         });
 
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to submit review');
+        }
+
         const data = await res.json();
 
-        // Add new review to list
-        setReviews(prev => [data, ...prev]);
+        if (editingReviewId) {
+          // Update existing review in list
+          setReviews(prev => prev.map(r =>
+            r.ReviewId === editingReviewId
+              ? { ...r, Review: newReview, Rating: reviewRating }
+              : r
+          ));
+        } else {
+          // Add new review to list
+          setReviews(prev => [data, ...prev]);
+        }
 
         // Reset form
         setNewReview("");
         setReviewRating(0);
         setShowReviewForm(false);
+        setEditingReviewId(null);
 
         // Refresh stats
         const reviewRes = await fetch(`http://localhost:5001/api/supabase/reviews/count?bookId=${id}`);
         const reviewData = await reviewRes.json();
         const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
         const ratingData = await ratingRes.json();
-        
+
         setBookStats(prev => ({
           ...prev,
           totalReviews: reviewData.count,
           avgRating: ratingData.avgRating,
           totalRatings: ratingData.count
         }));
-        
+
         console.log('✅ Review submitted successfully');
       } catch (err) {
         console.error('Failed to submit review', err);
@@ -474,7 +509,7 @@ function BookProfile() {
   // Handle delete review
   const handleDeleteReview = async (reviewId) => {
     if (!confirm('Are you sure you want to delete this review?')) return;
-    
+
     try {
       const res = await fetch(`http://localhost:5001/api/supabase/reviews/${reviewId}`, {
         method: 'DELETE',
@@ -482,28 +517,28 @@ function BookProfile() {
           'Authorization': `Bearer ${authToken}`
         }
       });
-      
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'Failed to delete review');
       }
-      
+
       // Remove review from list
       setReviews(prev => prev.filter(r => r.ReviewId !== reviewId));
-      
+
       // Refresh stats
       const reviewRes = await fetch(`http://localhost:5001/api/supabase/reviews/count?bookId=${id}`);
       const reviewData = await reviewRes.json();
       const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
       const ratingData = await ratingRes.json();
-      
+
       setBookStats(prev => ({
         ...prev,
         totalReviews: reviewData.count,
         avgRating: ratingData.avgRating,
         totalRatings: ratingData.count
       }));
-      
+
       console.log('✅ Review deleted successfully');
     } catch (err) {
       console.error('Failed to delete review', err);
@@ -521,26 +556,30 @@ function BookProfile() {
       <Header />
 
       <div className="book-profile">
-        {/* LEFT */}
-        <div className="book-profile-left">
-          <img
-            src={info.image || "/placeholder-book.png"}
-            alt={info.title}
-          />
+        {/* HERO SECTION - Book Cover + Main Info */}
+        <div className="book-hero">
+          {/* LEFT - Book Cover & Actions */}
+          <div className="book-cover-section">
+            <div className="book-cover-wrapper">
+              <img
+                src={info.image || "/placeholder-book.png"}
+                alt={info.title}
+              />
+            </div>
 
-          <div className="book-actions" ref={statusRef}>
-            <button
-              className="action-box"
-              onClick={() => {
-                if (!user) {
-                  requireLogin(() => { });
-                } else {
-                  setShowStatusDialog(prev => !prev);
-                }
-              }}
-            >
-              {status}
-            </button>
+            <div className="book-actions" ref={statusRef}>
+              <button
+                className="action-box"
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    requireLogin(() => { });
+                  } else {
+                    setShowStatusDialog(prev => !prev);
+                  }
+                }}
+              >
+                {status}
+              </button>
 
               {showStatusDialog && (
                 <div className="status-dropdown">
@@ -575,9 +614,8 @@ function BookProfile() {
                   {Array.from({ length: 5 }).map((_, i) => (
                     <span
                       key={i}
-                      className={`rate-star ${
-                        i < userRating ? "active" : ""
-                      }`}
+                      className={`rate-star ${i < userRating ? "active" : ""
+                        }`}
                       onClick={() => handleRatingClick(i + 1)}
                     >
                       ★
@@ -585,7 +623,7 @@ function BookProfile() {
                   ))}
                 </div>
                 {userRating > 0 && (
-                  <button 
+                  <button
                     className="clear-rating-btn"
                     onClick={() => handleRatingClick(0)}
                   >
@@ -610,44 +648,35 @@ function BookProfile() {
                 {Array.from({ length: 5 }).map((_, i) => (
                   <span
                     key={i}
-                    className={`rate-star ${i < userRating ? "active" : ""
+                    className={`star ${bookStats.avgRating && i < Math.round(bookStats.avgRating)
+                        ? "filled"
+                        : ""
                       }`}
-                    onClick={() => handleRatingClick(i + 1)}
                   >
                     ★
                   </span>
                 ))}
               </div>
 
-        {/* RIGHT */}
-        <div className="book-profile-right">
-          <h1 className="profile-title">{info.title}</h1>
+              <span className="rating-number">
+                {bookStats.avgRating > 0 ? bookStats.avgRating.toFixed(2) : "N/A"}
+              </span>
 
-          <p className="author">
-            {info.authors.join(", ") || "Unknown Author"}
-          </p>
+              <span className="rating-meta">
+                {bookStats.totalRatings.toLocaleString()} ratings
+              </span>
 
-          {/* RATING STATISTICS */}
-          <div className="rating-statistics">
-            <div className="stars">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`star ${bookStats.avgRating && i < Math.round(bookStats.avgRating)
-                      ? "filled"
-                      : ""
-                    }`}
-                >
-                  ★
-                </span>
-              ))}
+              <span className="rating-separator">•</span>
+
+              <span className="review-meta">
+                {bookStats.totalReviews.toLocaleString()} reviews
+              </span>
             </div>
 
             {/* DESCRIPTION */}
             <div
-              className={`description ${
-                expanded ? "expanded" : "collapsed"
-              }`}
+              className={`description ${expanded ? "expanded" : "collapsed"
+                }`}
               dangerouslySetInnerHTML={{
                 __html:
                   info.description || "No description available.",
@@ -665,87 +694,72 @@ function BookProfile() {
           </div>
         </div>
 
-            <span className="rating-meta">
-              {bookStats.totalRatings.toLocaleString()} ratings
-            </span>
+        {/* BOOK DETAILS SECTION */}
+        <div className="book-details-section">
+          <h3 className="section-title">Book Details</h3>
+          <div className="details-grid">
+            {info.pages && (
+              <div className="detail-item">
+                <span className="detail-label">Pages</span>
+                <span className="detail-value">{info.pages}</span>
+              </div>
+            )}
 
-            <span className="rating-separator">•</span>
+            {info.publisher && (
+              <div className="detail-item">
+                <span className="detail-label">Publisher</span>
+                <span className="detail-value">{info.publisher}</span>
+              </div>
+            )}
 
-            <span className="review-meta">
-              {bookStats.totalReviews.toLocaleString()} reviews
-            </span>
+            {info.publishedDate && (
+              <div className="detail-item">
+                <span className="detail-label">Publication Date</span>
+                <span className="detail-value">{info.publishedDate}</span>
+              </div>
+            )}
+
+            {info.isbn && (
+              <div className="detail-item">
+                <span className="detail-label">ISBN</span>
+                <span className="detail-value">{info.isbn}</span>
+              </div>
+            )}
+
+            {info.language && (
+              <div className="detail-item">
+                <span className="detail-label">Language</span>
+                <span className="detail-value">{info.language.toUpperCase()}</span>
+              </div>
+            )}
+
+            {info.categories.length > 0 && (
+              <div className="detail-item full-width">
+                <span className="detail-label">Genres</span>
+                <div className="genres-list">
+                  {info.categories.slice(0, 6).map((g, i) => (
+                    <span key={i} className="genre-tag">
+                      {g}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-          {/* DESCRIPTION */}
-          <div
-            className={`description ${expanded ? "expanded" : "collapsed"
-              }`}
-            dangerouslySetInnerHTML={{
-              __html:
-                info.description || "No description available.",
-            }}
-          />
+        {/* ABOUT THE AUTHOR */}
+        {authorInfo && (
+          <div className="author-section">
+            <h3 className="section-title">About the Author</h3>
 
-          {showToggle && (
-            <button
-              className="show-more"
-              onClick={() => setExpanded(!expanded)}
-            >
-              {expanded ? "Show less" : "Show more"}
-            </button>
-          )}
-
-          {/* BOOK DETAILS */}
-          <div className="book-details-section">
-            <h3 className="section-title">Book Details</h3>
-            <div className="details-grid">
-              {info.pages && (
-                <div className="detail-item">
-                  <span className="detail-label">Pages:</span>
-                  <span className="detail-value">{info.pages}</span>
-                </div>
-              )}
-
-              {info.publisher && (
-                <div className="detail-item">
-                  <span className="detail-label">Publisher:</span>
-                  <span className="detail-value">{info.publisher}</span>
-                </div>
-              )}
-
-              {info.publishedDate && (
-                <div className="detail-item">
-                  <span className="detail-label">Publication Date:</span>
-                  <span className="detail-value">{info.publishedDate}</span>
-                </div>
-              )}
-
-              {info.isbn && (
-                <div className="detail-item">
-                  <span className="detail-label">ISBN:</span>
-                  <span className="detail-value">{info.isbn}</span>
-                </div>
-              )}
-
-              {info.language && (
-                <div className="detail-item">
-                  <span className="detail-label">Language:</span>
-                  <span className="detail-value">{info.language.toUpperCase()}</span>
-                </div>
-              )}
-
-              {info.categories.length > 0 && (
-                <div className="detail-item full-width">
-                  <span className="detail-label">Genres:</span>
-                  <div className="genres-list">
-                    {info.categories.slice(0, 6).map((g, i) => (
-                      <span key={i} className="genre-tag">
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+            <div className="author-info">
+              {authorInfo.photos && (
+                <img
+                  className="author-image"
+                  src={`https://covers.openlibrary.org/a/olid/${authorInfo.key}-L.jpg`}
+                  alt={authorInfo.name}
+                />
               )}
 
               <div className="author-details">
@@ -761,24 +775,25 @@ function BookProfile() {
                 </p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* RATINGS AND REVIEWS */}
-          <div className="reviews-section">
-            <div className="reviews-header">
-              <h3 className="section-title">Ratings & Reviews</h3>
-              <button
-                className="write-review-btn"
-                onClick={() => {
-                  if (!user) {
-                    requireLogin(() => { });
-                  } else {
-                    setShowReviewForm(!showReviewForm);
-                  }
-                }}
-              >
-                {showReviewForm ? 'Cancel' : 'Write a Review'}
-              </button>
+        {/* MORE FROM AUTHOR */}
+        {moreBooks.length > 0 && (
+          <div className="more-books">
+            <h3 className="more-books-title">
+              More books by {info.authors[0]}
+            </h3>
+            <div className="more-books-row">
+              {moreBooks.map(b => (
+                <BookCard
+                  key={b.id}
+                  id={b.id}
+                  img={b.image}
+                  title={b.title}
+                  genre={b.genre}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -787,11 +802,11 @@ function BookProfile() {
         <div className="reviews-section">
           <div className="reviews-header">
             <h3 className="section-title">Ratings & Reviews</h3>
-            <button 
+            <button
               className="write-review-btn"
               onClick={() => {
                 if (!isLoggedIn) {
-                  requireLogin(() => {});
+                  requireLogin(() => { });
                 } else {
                   if (showReviewForm && editingReviewId) {
                     setNewReview("");
@@ -822,47 +837,49 @@ function BookProfile() {
                     </span>
                   ))}
                 </div>
+              </div>
 
-                <textarea
-                  className="review-textarea"
-                  placeholder="Share your thoughts about this book..."
-                  value={newReview}
-                  onChange={(e) => setNewReview(e.target.value)}
-                  required
-                />
+              <textarea
+                className="review-textarea"
+                placeholder="Share your thoughts about this book..."
+                value={newReview}
+                onChange={(e) => setNewReview(e.target.value)}
+                required
+              />
 
-                <button type="submit" className="submit-review-btn">
-                  Submit Review
-                </button>
-              </form>
-            )}
+              <button type="submit" className="submit-review-btn">
+                {editingReviewId ? 'Update Review' : 'Submit Review'}
+              </button>
+            </form>
+          )}
 
-            {/* Reviews List */}
-            <div className="reviews-list">
-              {reviews.length === 0 ? (
-                <p className="no-reviews">No reviews yet. Be the first to review!</p>
-              ) : (
-                reviews.map((review) => (
-                  <div key={review.ReviewId} className="review-card">
-                    <div className="review-header">
-                      <span className="reviewer-name">
-                        {review.UserName || "Anonymous User"}
-                      </span>
-                      <div className="review-rating">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <span
-                            key={i}
-                            className={`mini-star ${review.Rating && i < review.Rating ? "filled" : ""
-                              }`}
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </div>
+          {/* Reviews List */}
+          <div className="reviews-list">
+            {reviews.length === 0 ? (
+              <p className="no-reviews">No reviews yet. Be the first to review!</p>
+            ) : (
+              reviews.map((review) => (
+                <div key={review.ReviewId} className="review-card">
+                  <div className="review-header">
+                    <span className="reviewer-name">
+                      {review.UserName || "Anonymous User"}
+                    </span>
+                    <div className="review-rating">
+                      {review.Rating && Array.from({ length: 5 }).map((_, i) => (
+                        <span
+                          key={i}
+                          className={`mini-star ${i < review.Rating ? "filled" : ""
+                            }`}
+                        >
+                          ★
+                        </span>
+                      ))}
                     </div>
+                  </div>
 
-                    <p className="review-text">{review.Review}</p>
+                  <p className="review-text">{review.Review}</p>
 
+                  <div className="review-footer">
                     <span className="review-date">
                       {new Date(review.CreatedAt).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -870,16 +887,16 @@ function BookProfile() {
                         day: 'numeric'
                       })}
                     </span>
-                    
+
                     {currentUserId === review.UserId && (
                       <div className="review-actions">
-                        <button 
+                        <button
                           className="review-action-btn edit"
                           onClick={() => handleEditReview(review)}
                         >
                           Edit
                         </button>
-                        <button 
+                        <button
                           className="review-action-btn delete"
                           onClick={() => handleDeleteReview(review.ReviewId)}
                         >
