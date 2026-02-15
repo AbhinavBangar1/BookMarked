@@ -5,20 +5,20 @@ const supabase = createClient(
     process.env.SUPABASE_KEY
 );
 
-export async function requireAuth(req , res , next){
-    const authheader = req.headers.authorization;
-    if (!authheader){
-        res.status(401).json({error : "No tokens provided"});
+export async function requireAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ error: "No token provided" });
     }
 
-    const token = authheader.replace("Beared" , "");
+    const token = authHeader.replace("Bearer ", "");
 
-    const {data , auth} = await supabase.auth.getUser(token);
+    const { data, error } = await supabase.auth.getUser(token);
 
-    if (error || !data){
-        res.status(401).json({error : "Not Authorized"});
+    if (error || !data?.user) {
+        return res.status(401).json({ error: "Not Authorized" });
     }
 
-    res.user = data.user ;
+    req.user = data.user;
     next();
 }
