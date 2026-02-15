@@ -3,16 +3,17 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BookCard from "../components/BookCard";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../supabaseClient";
 import "./BookProfile.css";
 
 function BookProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
 
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Check if user is logged in
-  const [currentUserId, setCurrentUserId] = useState(null);
 
   const [expanded, setExpanded] = useState(false);
   const [status, setStatus] = useState("Want to Read");
@@ -20,7 +21,7 @@ function BookProfile() {
   const [userRating, setUserRating] = useState(0);
 
   const [moreBooks, setMoreBooks] = useState([]);
-  
+
   // New states for reviews and author
   const [reviews, setReviews] = useState([]);
   const [authorInfo, setAuthorInfo] = useState(null);
@@ -29,7 +30,7 @@ function BookProfile() {
     totalRatings: 0,
     totalReviews: 0
   });
-  
+
   // Review form states
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [newReview, setNewReview] = useState("");
@@ -37,26 +38,11 @@ function BookProfile() {
 
   const statusRef = useRef(null);
 
-  // Check if user is logged in (modify based on your auth implementation)
-  useEffect(() => {
-    // Replace this with your actual auth check logic
-    const checkAuth = async () => {
-      try {
-        // Example: Check localStorage, session, or call your auth API
-        const token = localStorage.getItem('authToken');
-        const userId = localStorage.getItem('userId');
-        
-        if (token && userId) {
-          setIsLoggedIn(true);
-          setCurrentUserId(userId);
-        }
-      } catch (err) {
-        console.error('Auth check failed', err);
-      }
-    };
-    
-    checkAuth();
-  }, []);
+  // Helper to get Supabase session token for API calls
+  const getAuthToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
+  };
 
   useEffect(() => {
     async function fetchBook() {
@@ -82,32 +68,32 @@ function BookProfile() {
     fetchBook();
   }, [id]);
   // Load user's current reading status for this book
-useEffect(() => {
-  if (!isLoggedIn || !id) return;
+  useEffect(() => {
+    if (!user || !id) return;
 
-  async function fetchReadingStatus() {
-    try {
-      const token = localStorage.getItem('authToken');
-      const res = await fetch(
-        `http://localhost:5001/api/reading-status/check?bookId=${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
+    async function fetchReadingStatus() {
+      try {
+        const token = await getAuthToken();
+        const res = await fetch(
+          `http://localhost:5001/api/reading-status/check?bookId=${id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
           }
-        }
-      );
-      const data = await res.json();
-      
-      if (data.status) {
-        setStatus(data.status);
-      }
-    } catch (err) {
-      console.error('Failed to fetch reading status', err);
-    }
-  }
+        );
+        const data = await res.json();
 
-  fetchReadingStatus();
-}, [isLoggedIn, id]);
+        if (data.status) {
+          setStatus(data.status);
+        }
+      } catch (err) {
+        console.error('Failed to fetch reading status', err);
+      }
+    }
+
+    fetchReadingStatus();
+  }, [user, id]);
 
   const info = useMemo(() => {
     if (!book?.data) return null;
@@ -116,38 +102,38 @@ useEffect(() => {
 
     return isOpenLibrary
       ? {
-          title: data.title,
-          authors: data.authors?.map(a => a.name) || [],
-          description:
-            typeof data.description === "string"
-              ? data.description
-              : data.description?.value,
-          image: data.covers?.length
-            ? `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg`
-            : null,
-          categories: data.subjects || [],
-          publishedDate: data.first_publish_date,
-          pages: data.number_of_pages,
-          publisher: data.publishers?.[0],
-          language: data.languages?.[0]?.key?.replace("/languages/", ""),
-          isbn: data.isbn_13?.[0] || data.isbn_10?.[0],
-          averageRating: null,
-          ratingsCount: null,
-        }
+        title: data.title,
+        authors: data.authors?.map(a => a.name) || [],
+        description:
+          typeof data.description === "string"
+            ? data.description
+            : data.description?.value,
+        image: data.covers?.length
+          ? `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg`
+          : null,
+        categories: data.subjects || [],
+        publishedDate: data.first_publish_date,
+        pages: data.number_of_pages,
+        publisher: data.publishers?.[0],
+        language: data.languages?.[0]?.key?.replace("/languages/", ""),
+        isbn: data.isbn_13?.[0] || data.isbn_10?.[0],
+        averageRating: null,
+        ratingsCount: null,
+      }
       : {
-          title: data.volumeInfo?.title,
-          authors: data.volumeInfo?.authors || [],
-          description: data.volumeInfo?.description,
-          image: data.volumeInfo?.imageLinks?.thumbnail,
-          categories: data.volumeInfo?.categories || [],
-          publishedDate: data.volumeInfo?.publishedDate,
-          pages: data.volumeInfo?.pageCount,
-          publisher: data.volumeInfo?.publisher,
-          language: data.volumeInfo?.language,
-          isbn: data.volumeInfo?.industryIdentifiers?.[0]?.identifier,
-          averageRating: data.volumeInfo?.averageRating,
-          ratingsCount: data.volumeInfo?.ratingsCount,
-        };
+        title: data.volumeInfo?.title,
+        authors: data.volumeInfo?.authors || [],
+        description: data.volumeInfo?.description,
+        image: data.volumeInfo?.imageLinks?.thumbnail,
+        categories: data.volumeInfo?.categories || [],
+        publishedDate: data.volumeInfo?.publishedDate,
+        pages: data.volumeInfo?.pageCount,
+        publisher: data.volumeInfo?.publisher,
+        language: data.volumeInfo?.language,
+        isbn: data.volumeInfo?.industryIdentifiers?.[0]?.identifier,
+        averageRating: data.volumeInfo?.averageRating,
+        ratingsCount: data.volumeInfo?.ratingsCount,
+      };
   }, [book]);
 
   // Fetch book statistics from Supabase
@@ -159,11 +145,11 @@ useEffect(() => {
         // Fetch average rating and count from rating table
         const ratingRes = await fetch(`/api/supabase/rating?bookId=${id}`);
         const ratingData = await ratingRes.json();
-        
+
         // Fetch review count from reviews table
         const reviewRes = await fetch(`/api/supabase/reviews/count?bookId=${id}`);
         const reviewData = await reviewRes.json();
-        
+
         setBookStats({
           avgRating: ratingData.avgRating || info.averageRating || 0,
           totalRatings: ratingData.count || info.ratingsCount || 0,
@@ -275,9 +261,9 @@ useEffect(() => {
 
   // Handle login requirement
   const requireLogin = (callback) => {
-    if (!isLoggedIn) {
+    if (!user) {
       alert('Please sign in to continue');
-      navigate('/auth'); // Adjust to your login route
+      navigate('/auth');
       return false;
     }
     callback();
@@ -285,40 +271,38 @@ useEffect(() => {
   };
 
   // Handle status change with login check
- const handleStatusChange = (newStatus) => {
-  requireLogin(async () => {
-    try {
-      // Get auth token (adjust based on your auth setup)
-      const token = localStorage.getItem('authToken'); // or however you store it
-      
-      // Save to reading_status table
-      const response = await fetch('http://localhost:5001/api/reading-status', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Add auth header
-        },
-        body: JSON.stringify({
-          bookId: id,
-          status: newStatus,
-          title: info.title,
-          coverImage: info.image,
-          genre: info.categories?.[0]
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update status');
+  const handleStatusChange = (newStatus) => {
+    requireLogin(async () => {
+      try {
+        const token = await getAuthToken();
+
+        const response = await fetch('http://localhost:5001/api/reading-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            bookId: id,
+            status: newStatus,
+            title: info.title,
+            coverImage: info.image,
+            genre: info.categories?.[0]
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update status');
+        }
+
+        setStatus(newStatus);
+        setShowStatusDialog(false);
+      } catch (err) {
+        console.error('Failed to update status', err);
+        alert('Failed to update reading status');
       }
-      
-      setStatus(newStatus);
-      setShowStatusDialog(false);
-    } catch (err) {
-      console.error('Failed to update status', err);
-      alert('Failed to update reading status');
-    }
-  });
-};
+    });
+  };
 
   // Handle rating with login check
   const handleRatingClick = (rating) => {
@@ -329,14 +313,14 @@ useEffect(() => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            UserId: currentUserId,
+            UserId: user.id,
             BookId: id,
             Rating: rating
           })
         });
-        
+
         setUserRating(rating);
-        
+
         // Refresh stats
         const ratingRes = await fetch(`/api/supabase/ratings?bookId=${id}`);
         const ratingData = await ratingRes.json();
@@ -354,7 +338,7 @@ useEffect(() => {
   // Handle review submission with login check
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    
+
     requireLogin(async () => {
       try {
         // Save to Supabase reviews table
@@ -363,22 +347,22 @@ useEffect(() => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             Review: newReview,
-            UserId: currentUserId,
+            UserId: user.id,
             BookId: id,
             Rating: reviewRating
           })
         });
-        
+
         const data = await res.json();
-        
+
         // Add new review to list
         setReviews(prev => [data, ...prev]);
-        
+
         // Reset form
         setNewReview("");
         setReviewRating(0);
         setShowReviewForm(false);
-        
+
         // Refresh stats
         const reviewRes = await fetch(`/api/supabase/reviews/count?bookId=${id}`);
         const reviewData = await reviewRes.json();
@@ -413,8 +397,8 @@ useEffect(() => {
             <button
               className="action-box"
               onClick={() => {
-                if (!isLoggedIn) {
-                  requireLogin(() => {});
+                if (!user) {
+                  requireLogin(() => { });
                 } else {
                   setShowStatusDialog(prev => !prev);
                 }
@@ -449,9 +433,8 @@ useEffect(() => {
                 {Array.from({ length: 5 }).map((_, i) => (
                   <span
                     key={i}
-                    className={`rate-star ${
-                      i < userRating ? "active" : ""
-                    }`}
+                    className={`rate-star ${i < userRating ? "active" : ""
+                      }`}
                     onClick={() => handleRatingClick(i + 1)}
                   >
                     ★
@@ -476,11 +459,10 @@ useEffect(() => {
               {Array.from({ length: 5 }).map((_, i) => (
                 <span
                   key={i}
-                  className={`star ${
-                    bookStats.avgRating && i < Math.round(bookStats.avgRating)
+                  className={`star ${bookStats.avgRating && i < Math.round(bookStats.avgRating)
                       ? "filled"
                       : ""
-                  }`}
+                    }`}
                 >
                   ★
                 </span>
@@ -494,9 +476,9 @@ useEffect(() => {
             <span className="rating-meta">
               {bookStats.totalRatings.toLocaleString()} ratings
             </span>
-            
+
             <span className="rating-separator">•</span>
-            
+
             <span className="review-meta">
               {bookStats.totalReviews.toLocaleString()} reviews
             </span>
@@ -504,9 +486,8 @@ useEffect(() => {
 
           {/* DESCRIPTION */}
           <div
-            className={`description ${
-              expanded ? "expanded" : "collapsed"
-            }`}
+            className={`description ${expanded ? "expanded" : "collapsed"
+              }`}
             dangerouslySetInnerHTML={{
               __html:
                 info.description || "No description available.",
@@ -532,35 +513,35 @@ useEffect(() => {
                   <span className="detail-value">{info.pages}</span>
                 </div>
               )}
-              
+
               {info.publisher && (
                 <div className="detail-item">
                   <span className="detail-label">Publisher:</span>
                   <span className="detail-value">{info.publisher}</span>
                 </div>
               )}
-              
+
               {info.publishedDate && (
                 <div className="detail-item">
                   <span className="detail-label">Publication Date:</span>
                   <span className="detail-value">{info.publishedDate}</span>
                 </div>
               )}
-              
+
               {info.isbn && (
                 <div className="detail-item">
                   <span className="detail-label">ISBN:</span>
                   <span className="detail-value">{info.isbn}</span>
                 </div>
               )}
-              
+
               {info.language && (
                 <div className="detail-item">
                   <span className="detail-label">Language:</span>
                   <span className="detail-value">{info.language.toUpperCase()}</span>
                 </div>
               )}
-              
+
               {info.categories.length > 0 && (
                 <div className="detail-item full-width">
                   <span className="detail-label">Genres:</span>
@@ -598,11 +579,11 @@ useEffect(() => {
           <div className="reviews-section">
             <div className="reviews-header">
               <h3 className="section-title">Ratings & Reviews</h3>
-              <button 
+              <button
                 className="write-review-btn"
                 onClick={() => {
-                  if (!isLoggedIn) {
-                    requireLogin(() => {});
+                  if (!user) {
+                    requireLogin(() => { });
                   } else {
                     setShowReviewForm(!showReviewForm);
                   }
@@ -629,7 +610,7 @@ useEffect(() => {
                     ))}
                   </div>
                 </div>
-                
+
                 <textarea
                   className="review-textarea"
                   placeholder="Share your thoughts about this book..."
@@ -637,7 +618,7 @@ useEffect(() => {
                   onChange={(e) => setNewReview(e.target.value)}
                   required
                 />
-                
+
                 <button type="submit" className="submit-review-btn">
                   Submit Review
                 </button>
@@ -659,18 +640,17 @@ useEffect(() => {
                         {Array.from({ length: 5 }).map((_, i) => (
                           <span
                             key={i}
-                            className={`mini-star ${
-                              review.Rating && i < review.Rating ? "filled" : ""
-                            }`}
+                            className={`mini-star ${review.Rating && i < review.Rating ? "filled" : ""
+                              }`}
                           >
                             ★
                           </span>
                         ))}
                       </div>
                     </div>
-                    
+
                     <p className="review-text">{review.Review}</p>
-                    
+
                     <span className="review-date">
                       {new Date(review.CreatedAt).toLocaleDateString('en-US', {
                         year: 'numeric',
