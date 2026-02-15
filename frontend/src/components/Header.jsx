@@ -13,7 +13,7 @@ function Header() {
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
-    const { user, signOut } = useAuth();
+    const { user, profile, signOut } = useAuth();
 
     const toHome = () => navigate(`/`);
     const toAuth = () => navigate('/auth');
@@ -43,8 +43,11 @@ function Header() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Get user initials for avatar
+    // Get user initials for avatar — prefer username, fallback to email
     const getUserInitials = () => {
+        if (profile?.username) {
+            return profile.username.charAt(0).toUpperCase();
+        }
         if (!user?.email) return '?';
         return user.email.charAt(0).toUpperCase();
     };
@@ -81,6 +84,9 @@ function Header() {
                         )}
                         {showDropdown && user && (
                             <div className='profile-dropdown'>
+                                {profile?.username && (
+                                    <div className='dropdown-username'>{profile.username}</div>
+                                )}
                                 <div className='dropdown-email'>{user.email}</div>
                                 <button
                                     className='dropdown-logout'
@@ -102,4 +108,3 @@ function Header() {
 }
 
 export default Header;
-

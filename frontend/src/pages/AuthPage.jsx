@@ -1,28 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FcGoogle } from 'react-icons/fc';
 import { IoBookSharp } from 'react-icons/io5';
-import { HiMail, HiLockClosed, HiEye, HiEyeOff } from 'react-icons/hi';
+import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiUser } from 'react-icons/hi';
 import './AuthPage.css';
 
 function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { signIn, signUp, signInWithGoogle, user } = useAuth();
+    const { signIn, signUp, signInWithGoogle, user, needsProfileCompletion } = useAuth();
     const navigate = useNavigate();
 
-    // Redirect if already logged in
-    if (user) {
-        navigate('/');
-        return null;
-    }
+    // Redirect if already logged in AND profile is complete
+    useEffect(() => {
+        if (user && !needsProfileCompletion) {
+            navigate('/');
+        }
+    }, [user, needsProfileCompletion, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -36,9 +38,15 @@ function AuthPage() {
                 if (error) throw error;
                 navigate('/');
             } else {
-                const { error } = await signUp(email, password);
+                if (!username.trim()) {
+                    throw new Error('Username is required');
+                }
+                // Username is stored in user_metadata, profile row
+                // will be created automatically by syncProfileToUsersTable
+                const { error } = await signUp(email, password, username.trim());
                 if (error) throw error;
-                setMessage('Check your email for the confirmation link!');
+
+                setMessage('Account created successfully!');
             }
         } catch (err) {
             setError(err.message);
@@ -54,6 +62,9 @@ function AuthPage() {
             setError(error.message);
         }
     };
+
+    // Don't render the form if user is logged in (will redirect or show modal)
+    if (user) return null;
 
     return (
         <div className="auth-page">
@@ -98,6 +109,22 @@ function AuthPage() {
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="auth-form">
+                        {/* Username field - only on sign up */}
+                        {!isLogin && (
+                            <div className="input-group">
+                                <HiUser className="input-icon" />
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    required
+                                    minLength={3}
+                                    maxLength={30}
+                                />
+                            </div>
+                        )}
+
                         <div className="input-group">
                             <HiMail className="input-icon" />
                             <input
@@ -151,6 +178,7 @@ function AuthPage() {
                                 setIsLogin(!isLogin);
                                 setError('');
                                 setMessage('');
+                                setUsername('');
                             }}
                         >
                             {isLogin ? 'Sign Up' : 'Log In'}

@@ -331,6 +331,45 @@
     text-decoration: underline;
 }
 
+/* Profile Completion Modal */
+.profile-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    background: linear-gradient(135deg, #0d1b2a 0%, #1b3a4b 50%, #006466 100%);
+}
+
+.profile-modal {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    animation: modalSlideIn 0.4s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     .auth-card {
@@ -348,5 +387,10 @@
 
     .auth-logo-text {
         font-size: 1.5rem;
+    }
+
+    .profile-modal {
+        padding: 36px 24px;
+        border-radius: 20px;
     }
 }

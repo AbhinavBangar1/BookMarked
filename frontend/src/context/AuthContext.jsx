@@ -7,30 +7,144 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
+
+    // Fetch the user's profile from public.users
+    const fetchProfile = async (userId) => {
+        if (!userId) {
+            setProfile(null);
+            setNeedsProfileCompletion(false);
+            return null;
+        }
+
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (error || !data) {
+            setProfile(null);
+            setNeedsProfileCompletion(true);
+            return null;
+        }
+
+        setProfile(data);
+        setNeedsProfileCompletion(false);
+        return data;
+    };
+
+    // Try to sync user to public.users table (called when session is active)
+    const syncProfileToUsersTable = async (authUser) => {
+        if (!authUser) return;
+
+        // First check if profile already exists
+        const { data: existing } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', authUser.id)
+            .maybeSingle();
+
+        if (existing) {
+            setProfile(existing);
+            setNeedsProfileCompletion(false);
+            return;
+        }
+
+        // Check if we have username in user_metadata (set during signUp)
+        const username = authUser.user_metadata?.username;
+        const email = authUser.email;
+
+        if (username) {
+            // We have metadata, create the profile row
+            const { data, error } = await supabase
+                .from('users')
+                .insert({
+                    id: authUser.id,
+                    email: email,
+                    username: username,
+                    updated_at: new Date().toISOString(),
+                })
+                .select()
+                .single();
+
+            if (!error && data) {
+                setProfile(data);
+                setNeedsProfileCompletion(false);
+                return;
+            }
+        }
+
+        // No profile and no metadata username — need to complete profile
+        // (this happens for Google sign-in users)
+        setProfile(null);
+        setNeedsProfileCompletion(true);
+    };
 
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
+            const currentUser = session?.user ?? null;
+            setUser(currentUser);
+            if (currentUser) {
+                syncProfileToUsersTable(currentUser);
+            }
             setLoading(false);
         });
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
-                setUser(session?.user ?? null);
+            async (_event, session) => {
+                const currentUser = session?.user ?? null;
+                setUser(currentUser);
+                if (currentUser) {
+                    await syncProfileToUsersTable(currentUser);
+                } else {
+                    setProfile(null);
+                    setNeedsProfileCompletion(false);
+                }
             }
         );
 
         return () => subscription.unsubscribe();
     }, []);
 
-    const signUp = async (email, password) => {
+    // Sign up with username stored in user_metadata
+    const signUp = async (email, password, username) => {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+                data: {
+                    username: username,  // stored in user_metadata
+                },
+            },
         });
+        return { data, error };
+    };
+
+    // Save or update the user profile in public.users
+    const updateProfile = async (username, email) => {
+        if (!user) return { error: { message: 'Not authenticated' } };
+
+        const { data, error } = await supabase
+            .from('users')
+            .upsert({
+                id: user.id,
+                email: email || user.email,
+                username: username,
+                updated_at: new Date().toISOString(),
+            }, { onConflict: 'id' })
+            .select()
+            .single();
+
+        if (!error && data) {
+            setProfile(data);
+            setNeedsProfileCompletion(false);
+        }
+
         return { data, error };
     };
 
@@ -54,16 +168,22 @@ export const AuthProvider = ({ children }) => {
 
     const signOut = async () => {
         const { error } = await supabase.auth.signOut();
+        setProfile(null);
+        setNeedsProfileCompletion(false);
         return { error };
     };
 
     const value = {
         user,
+        profile,
         loading,
+        needsProfileCompletion,
         signUp,
         signIn,
         signInWithGoogle,
         signOut,
+        updateProfile,
+        fetchProfile,
     };
 
     return (
