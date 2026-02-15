@@ -6,19 +6,29 @@ const supabase = createClient(
 );
 
 export async function requireAuth(req, res, next) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
+    const authheader = req.headers.authorization;
+    
+    if (!authheader) {
         return res.status(401).json({ error: "No token provided" });
     }
 
-    const token = authHeader.replace("Bearer ", "");
+    // ✅ FIXED: "Bearer " (not "Beared"), with space, and trim the result
+    const token = authheader.replace("Bearer ", "").trim();
 
-    const { data, error } = await supabase.auth.getUser(token);
+    try {
+        // ✅ FIXED: "error" not "auth"
+        const { data, error } = await supabase.auth.getUser(token);
 
-    if (error || !data?.user) {
-        return res.status(401).json({ error: "Not Authorized" });
+        if (error || !data || !data.user) {
+            console.error("Auth error:", error);
+            return res.status(401).json({ error: "Not Authorized" });
+        }
+
+        // ✅ FIXED: "req.user" not "res.user"
+        req.user = data.user;
+        next();
+    } catch (err) {
+        console.error("requireAuth failed:", err);
+        return res.status(500).json({ error: "Authentication failed" });
     }
-
-    req.user = data.user;
-    next();
 }

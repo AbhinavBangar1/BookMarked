@@ -30,7 +30,7 @@ app.use("/api/bookmark", requireAuth, bookmarkRoutes); // For Wishlist
 // New routes for reviews, ratings, and reading status
 app.use("/api/supabase/rating", ratingRoutes);
 app.use("/api/supabase/reviews", reviewRoutes);
-app.use("/api/supabase/author", authorRoutes);
+app.use("/api/author", authorRoutes);
 app.use("/api/reading-status", readingStatusRoutes); // NEW - For Want to Read, etc.
 
 app.listen(PORT, () => {
