@@ -45,7 +45,7 @@
 }
 
 .headerright {
-    border: 2px solid red;
+    /* border: 2px solid red; */
     display: flex;
     align-items: center;
     gap: 1.5rem;
@@ -110,10 +110,17 @@
     }
 }
 
+.dropdown-username {
+    padding: 16px 16px 4px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
 .dropdown-email {
-    padding: 16px;
-    font-size: 0.9rem;
-    color: #333;
+    padding: 4px 16px 16px 16px;
+    font-size: 0.85rem;
+    color: #666;
     border-bottom: 1px solid #eee;
     word-break: break-all;
 }
