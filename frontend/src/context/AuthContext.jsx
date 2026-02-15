@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
         const { data, error } = await supabase
             .from('users')
             .select('*')
-            .eq('id', userId)
+            .eq('userid', userId)
             .maybeSingle();
 
         if (error || !data) {
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         const { data: existing } = await supabase
             .from('users')
             .select('*')
-            .eq('id', authUser.id)
+            .eq('userid', authUser.id)
             .maybeSingle();
 
         if (existing) {
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
             const { data, error } = await supabase
                 .from('users')
                 .insert({
-                    id: authUser.id,
+                    userid: authUser.id,
                     email: email,
                     username: username,
                     updated_at: new Date().toISOString(),
@@ -132,11 +132,11 @@ export const AuthProvider = ({ children }) => {
         const { data, error } = await supabase
             .from('users')
             .upsert({
-                id: user.id,
+                userid: user.id,
                 email: email || user.email,
                 username: username,
                 updated_at: new Date().toISOString(),
-            }, { onConflict: 'id' })
+            }, { onConflict: 'userid' })
             .select()
             .single();
 
