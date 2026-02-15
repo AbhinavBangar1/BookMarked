@@ -8,13 +8,21 @@
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
+/* hover stays same */
 .book-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
 }
 
+.book-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* cover-wrapper is already perfect */
 .cover-wrapper {
   position: relative;
   width: 100%;
@@ -28,6 +36,7 @@
   object-fit: cover;
 }
 
+/* bookmark button */
 .bookmark-btn {
   position: absolute;
   top: 10px;
@@ -42,12 +51,41 @@
   justify-content: center;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
+  color: #6b7280;
 }
 
 .bookmark-btn:hover {
   background: #ffffff;
   transform: scale(1.05);
+  color: #2f7f7a;
+}
+
+.bookmark-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Bookmarked state */
+.bookmark-btn.bookmarked {
+  background: rgba(47, 127, 122, 0.95);
+  color: #ffffff;
+}
+
+.bookmark-btn.bookmarked:hover {
+  background: #2f7f7a;
+  transform: scale(1.05);
+}
+
+/* Active animation */
+@keyframes bookmark-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.85); }
+  100% { transform: scale(1.05); }
+}
+
+.bookmark-btn:active {
+  animation: bookmark-pop 0.3s ease;
 }
 
 .book-info {
@@ -55,6 +93,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  flex-grow: 1;
 }
 
 .book-title {
@@ -75,4 +114,5 @@
   color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  margin-top: auto;
 }

@@ -17,10 +17,19 @@ function Header() {
 
     const toHome = () => navigate(`/`);
     const toAuth = () => navigate('/auth');
+    const toWishlist = () => navigate('/wishlist');
 
     const handleProfileClick = () => {
         if (user) {
             setShowDropdown(!showDropdown);
+        } else {
+            toAuth();
+        }
+    };
+
+    const handleWishlistClick = () => {
+        if (user) {
+            toWishlist();
         } else {
             toAuth();
         }
@@ -62,7 +71,11 @@ function Header() {
                     </button>
                 </div>
                 <div className='headerright'>
-                    <FaBookBookmark className='wishlist-icon' />
+                    <FaBookBookmark
+                        className='wishlist-icon'
+                        onClick={handleWishlistClick}
+                        style={{ cursor: 'pointer' }}
+                    />
                     {isSearchOpen ?
                         <IoClose className='search' onClick={() => setIsSearchOpen(false)} />
                         :
