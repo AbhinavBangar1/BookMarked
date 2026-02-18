@@ -2,16 +2,160 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 .author-content {
   flex: 1;
-  padding: 2rem;
   max-width: 1200px;
-  margin: 0 auto;
   width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
-.author-details {
+/* Loading & Error States */
+.loading-container,
+.error-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+}
+
+.loading-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--primary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Author Profile Header */
+.author-profile-header {
+  display: flex;
+  gap: 3rem;
+  margin-bottom: 4rem;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.author-image-container {
+  flex-shrink: 0;
+  width: 250px;
+}
+
+.author-profile-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  object-fit: cover;
+}
+
+.author-info-section {
+  flex: 1;
+}
+
+.author-name {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.author-life-span {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+.author-bio {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #444;
+  white-space: pre-wrap;
+}
+
+/* Books Section */
+/* Books Section */
+.author-books-section {
+  text-align: left;
   margin-top: 2rem;
+}
+
+.author-books-section h2 {
+  display: none;
+  /* Hide the old heading if user wants "From the Author" as the main one, or keep it? */
+}
+
+/* User asked to "shift the text to the left" for the subheading */
+.books-subheading {
+  font-family: 'Crimson Pro', serif;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2rem;
+  position: relative;
+  display: inline-block;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.books-subheading::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  border-radius: 2px;
+}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem;
+  justify-items: start;
+  /* Align grid items to start since we are left aligning */
+  padding-bottom: 2rem;
+}
+
+.no-books-msg {
+  text-align: left;
+  font-size: 1.2rem;
+  color: #666;
+  margin-top: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .author-profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 2rem;
+  }
+
+  .author-image-container {
+    width: 200px;
+  }
+
+  .books-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+  }
 }

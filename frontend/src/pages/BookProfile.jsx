@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -242,7 +242,7 @@ function BookProfile() {
 
   // Fetch author information
   useEffect(() => {
-    if (!info || info.authors.length === 0) return;
+    if (!info || !info.authors?.[0]) return;
 
     async function fetchAuthorInfo() {
       try {
@@ -649,8 +649,8 @@ function BookProfile() {
                   <span
                     key={i}
                     className={`star ${bookStats.avgRating && i < Math.round(bookStats.avgRating)
-                        ? "filled"
-                        : ""
+                      ? "filled"
+                      : ""
                       }`}
                   >
                     ★
@@ -763,7 +763,15 @@ function BookProfile() {
               )}
 
               <div className="author-details">
-                <h4 className="author-name">{authorInfo.name}</h4>
+                <h4 className="author-name">
+                  {authorInfo.name && authorInfo.key ? (
+                    <Link to={`/author/${authorInfo.key}`} className="author-link">
+                      {authorInfo.name}
+                    </Link>
+                  ) : (
+                    <span>{authorInfo.name || "Unknown Author"}</span>
+                  )}
+                </h4>
 
                 <p className="author-meta">
                   {authorInfo.birth_date}

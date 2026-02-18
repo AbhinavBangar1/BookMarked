@@ -37,6 +37,35 @@ router.get("/:id", async (req, res) => {
     }
 
     const workData = await workRes.json();
+
+    // OpenLibrary works return authors as key references, not names.
+    // Resolve each author key to get the actual name.
+    if (workData.authors && workData.authors.length > 0) {
+      const resolvedAuthors = await Promise.all(
+        workData.authors.map(async (entry) => {
+          try {
+            const authorKey = entry.author?.key;
+            if (!authorKey) return entry;
+
+            const authorRes = await fetch(
+              `https://openlibrary.org${authorKey}.json`
+            );
+            if (!authorRes.ok) return entry;
+
+            const authorData = await authorRes.json();
+            return {
+              ...entry,
+              name: authorData.name,
+              key: authorKey,
+            };
+          } catch {
+            return entry;
+          }
+        })
+      );
+      workData.authors = resolvedAuthors;
+    }
+
     res.json(workData);
 
   } catch (err) {
