@@ -121,15 +121,29 @@ router.get("/author-image", async (req, res) => {
 
     const response = await axios.get(url);
 
-    const author = response.data.docs?.[0];
+    const docs = response.data.docs;
 
-    if (!author) return res.json(null);
+    if (!docs || docs.length === 0) {
+      return res.json(null);
+    }
+
+    // Pick the best matching author, not just the first result
+    const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const target = normalize(name);
+    const author =
+      docs.find((d) => normalize(d.name) === target) ||
+      docs.find((d) => {
+        const n = normalize(d.name);
+        return n.includes(target) || target.includes(n);
+      }) ||
+      docs[0];
+
+    const authorId = author.key.split("/").pop();
 
     res.json({
       name: author.name,
-      image: `https://covers.openlibrary.org/a/olid/${author.key
-        .split("/")
-        .pop()}-M.jpg`,
+      id: authorId,
+      image: `https://covers.openlibrary.org/a/olid/${authorId}-M.jpg`,
     });
   } catch (error) {
     console.error("Author image error:", error.message);

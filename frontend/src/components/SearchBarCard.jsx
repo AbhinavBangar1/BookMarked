@@ -8,27 +8,38 @@ function SearchBarCard({ data, type, onSelect }) {
   const info = data.volumeInfo || {};
   const authorName = info.authors?.[0];
   const [authorImg, setAuthorImg] = useState(null);
+  const [authorId, setAuthorId] = useState(null);
 
   useEffect(() => {
     if (type !== "author" || !authorName) return;
 
-    const fetchAuthorImage = async () => {
+    const fetchAuthorData = async () => {
       try {
         const res = await axios.get("/api/search/author-image", {
           params: { name: authorName },
         });
-        setAuthorImg(res.data?.image || null);
-      } catch {
-        setAuthorImg(null);
+        if (res.data) {
+          setAuthorImg(res.data.image);
+          setAuthorId(res.data.id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch author data", err);
       }
     };
 
-    fetchAuthorImage();
+    fetchAuthorData();
   }, [type, authorName]);
 
   const handleBookClick = () => {
     navigate(`/book/${data.id}`);
     onSelect?.();
+  };
+
+  const handleAuthorClick = () => {
+    if (authorId) {
+      navigate(`/author/${authorId}`);
+      onSelect?.();
+    }
   };
 
   /* ---------- BOOK RESULTS ---------- */
@@ -53,7 +64,11 @@ function SearchBarCard({ data, type, onSelect }) {
   /* ---------- AUTHOR RESULTS ---------- */
   if (type === "author") {
     return (
-      <div className="searchcard">
+      <div
+        className={`searchcard ${authorId ? "clickable" : ""}`}
+        onClick={handleAuthorClick}
+        title={authorId ? "View Author Page" : "Author page not available"}
+      >
         <div className="img-wrapper">
           {authorImg ? (
             <img className="img" src={authorImg} alt={authorName} />

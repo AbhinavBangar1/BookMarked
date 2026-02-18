@@ -36,8 +36,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ========================================
@@ -53,8 +60,15 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* LEFT - Book Cover */
@@ -71,12 +85,13 @@
 }
 
 @keyframes bookAppear {
-  from { 
-    opacity: 0; 
+  from {
+    opacity: 0;
     transform: perspective(1000px) rotateY(-15deg) scale(0.9);
   }
-  to { 
-    opacity: 1; 
+
+  to {
+    opacity: 1;
     transform: perspective(1000px) rotateY(0) scale(1);
   }
 }
@@ -84,7 +99,7 @@
 .book-cover-wrapper img {
   width: 100%;
   border-radius: 12px;
-  box-shadow: 
+  box-shadow:
     0 25px 50px rgba(0, 0, 0, 0.2),
     0 0 0 1px rgba(0, 0, 0, 0.05);
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -92,7 +107,7 @@
 
 .book-cover-wrapper:hover img {
   transform: translateY(-8px) scale(1.02);
-  box-shadow: 
+  box-shadow:
     0 35px 70px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(0, 0, 0, 0.05);
 }
@@ -131,7 +146,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s;
 }
 
@@ -175,6 +190,7 @@
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -250,8 +266,15 @@
 }
 
 @keyframes starPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.4); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.4);
+  }
 }
 
 .clear-rating-btn {
@@ -278,8 +301,15 @@
 }
 
 @keyframes contentFadeIn {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Title */
@@ -416,6 +446,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -651,6 +682,7 @@
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -770,15 +802,24 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.review-card:nth-child(1) { animation-delay: 0.1s; }
-.review-card:nth-child(2) { animation-delay: 0.2s; }
-.review-card:nth-child(3) { animation-delay: 0.3s; }
+.review-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.review-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.review-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
 
 .review-card:hover {
   transform: translateY(-4px);
@@ -966,4 +1007,16 @@
   .section-title {
     font-size: 1.5rem;
   }
+}
+
+/* Author Link */
+.author-link {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+.author-link:hover {
+  text-decoration: underline;
+  color: var(--primary-color, #007bff);
 }
