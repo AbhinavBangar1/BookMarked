@@ -3,9 +3,9 @@ import { supabase } from "../services/supabase";
 import { getDashboard } from "../services/api";
 
 import DashboardLayout from "../layout/Dashboardlayout";
-import ProfileHeader from "../components/Profileheader";
-import Tabs from "../components/tabs";
-import ContentSection from "../components/ContentSection";
+import ProfileHeader from "../components copy/Profileheader";
+import Tabs from "../components copy/tabs";
+import ContentSection from "../components copy/ContentSection";
 
 export default function Dashboard() {
 
