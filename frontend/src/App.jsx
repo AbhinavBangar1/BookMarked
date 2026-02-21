@@ -9,6 +9,7 @@ import AuthorPage from './pages/AuthorPage.jsx';
 import Wishlist from './pages/Wishlist.jsx';
 import ProfileCompletionModal from './components/ProfileCompletionModal.jsx';
 import { Routes, Route } from 'react-router-dom';
+import Dashboard from './pages copy/Dashboard.jsx'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/book/:id" element={<BookProfile />} />
         <Route path="/author/:id" element={<AuthorPage />} />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="profile" element={<Dashboard/>}/>
       </Routes>
     </>
   );
