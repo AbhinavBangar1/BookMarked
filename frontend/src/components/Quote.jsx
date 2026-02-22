@@ -5,13 +5,27 @@ import { TbTilde } from "react-icons/tb";
 
 function Quote() {
   const [result, setResult] = useState({ quote: "", author: "" });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`/api/quote`)
       .then(res => res.json())
       .then(data => setResult(data))
-      .catch(err => console.log(err));
+      .catch(err => console.log(err))
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <div className="main-container">
+        <div className="quote-container skeleton-quote">
+          <div className="skeleton-line short"></div>
+          <div className="skeleton-line long"></div>
+          <div className="skeleton-line author"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="main-container">

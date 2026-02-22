@@ -11,8 +11,8 @@ function SearchBar({ isOpen, onClose }) {
   const tabs = [
     { id: "books", label: "Books" },
     { id: "author", label: "Author" },
-    { id: "clubs", label: "Clubs" },
-    { id: "users", label: "Users" },
+    // { id: "clubs", label: "Clubs" },
+    // { id: "users", label: "Users" },
   ];
 
   const [activeTab, setActiveTab] = useState("books");
@@ -50,7 +50,7 @@ function SearchBar({ isOpen, onClose }) {
   return (
     <div className="search-overlay" onClick={onClose}>
       <div className="search-container" onClick={(e) => e.stopPropagation()}>
-        {/* ---------- TOP ---------- */}
+
         <div className="search-top">
           <FiSearch className="search-icon" />
           <input
@@ -66,7 +66,6 @@ function SearchBar({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* ---------- TABS ---------- */}
         <div className="search-tabs">
           {tabs.map((tab) => (
             <button
@@ -79,7 +78,6 @@ function SearchBar({ isOpen, onClose }) {
           ))}
         </div>
 
-        {/* ---------- RESULTS ---------- */}
         <div className="search-results">
           {loading && <p>Loading...</p>}
 
@@ -97,7 +95,6 @@ function SearchBar({ isOpen, onClose }) {
           ))}
         </div>
 
-        {/* ---------- EMPTY ---------- */}
         {!query && (
           <div className="search-empty">
             <FiSearch className="empty-icon" />
