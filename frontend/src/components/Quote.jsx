@@ -23,7 +23,7 @@ function Quote() {
         </p>
 
         <p className="author">
-          <TbTilde /> {result.author}<br/>{result.book}
+          <TbTilde /> {result.author}<br/>({result.book})
         </p>
       </div>
     </div>

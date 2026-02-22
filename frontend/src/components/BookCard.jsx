@@ -1,21 +1,13 @@
 import './BookCard.css';
 import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useRef , useState , useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChange }) {
   const [bookmarked, setBookmarked] = useState(isBookmarked);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-
-  // Not needed or wrong logic will see later on ---------------------
-  // Check if book is bookmarked when component mounts
-  // useEffect(() => {
-  //   if (user && id) {
-  //     checkBookmarkStatus();
-  //   }
-  // }, [user, id]);
 
   const checkBookmarkStatus = async () => {
     try {
@@ -28,6 +20,22 @@ function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChang
       console.error("Failed to check bookmark status:", error);
     }
   };
+
+  const titleRef = useRef(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      const el = titleRef.current;
+      if (el) {
+        setIsOverflowing(el.scrollWidth > el.clientWidth);
+      }
+    };
+
+    checkOverflow();
+    window.addEventListener("resize", checkOverflow);
+    return () => window.removeEventListener("resize", checkOverflow);
+  }, [title]);
 
   const handleBookmarkClick = async (e) => {
     e.preventDefault();
@@ -91,24 +99,32 @@ function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChang
 
   return (
     <Link to={`/book/${id}`} className="book-card-link">
-      <div className="book-card">
-        <div className="cover-wrapper">
-          <img src={img} alt={title} />
-          <button
-            className={`bookmark-btn ${bookmarked ? 'bookmarked' : ''}`}
-            onClick={handleBookmarkClick}
-            disabled={loading}
-          >
-            {bookmarked ? <BsBookmarkFill /> : <BsBookmark />}
-          </button>
-        </div>
+  <div className="book-card">
+    <div className="cover-wrapper">
+      <img src={img} alt={title} />
 
-        <div className="book-info">
-          <h3 className="book-title">{title}</h3>
-          <span className="book-genre">{genre}</span>
-        </div>
+      <div className="cover-overlay" />
+
+      <button
+        className={`bookmark-btn ${bookmarked ? 'bookmarked' : ''}`}
+        onClick={handleBookmarkClick}
+        disabled={loading}
+      >
+        {bookmarked ? <BsBookmarkFill /> : <BsBookmark />}
+      </button>
+
+      <div className="cover-info">
+            <h3 className="cover-title" ref={titleRef}>
+              <div className={`marquee ${isOverflowing ? 'animate' : ''}`}>
+                <span>{title}</span>
+                {isOverflowing && <span>{title}</span>}
+              </div>
+            </h3>
+        <span className="cover-meta">{genre}</span>
       </div>
-    </Link>
+    </div>
+  </div>
+</Link>
   );
 }
 

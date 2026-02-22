@@ -14,11 +14,9 @@ function Explore() {
             <Header/>
             <CategoryBar/>
             <Quote/>
-            {/* <BookCard title={"My Life"} img={"https://placehold.co/600x400"} genre={"Horror"}/> */}
-            <Section title = {"BestSeller"} section_title={"NewRelease"}/>
-            <Section title = {"Lord Of the Rings"} section_title={"Popular"}/>
-            <Section title = {"BestSellers"} section_title={"BestSellers"}/>
-            {/* <Section title={"the cock down the block"} section_title={"Smut"}/> */}
+            <Section type = {"bestsellers"} section_title={"BestSellers"}/>
+            <Section type = {"toprated"} section_title={"Top Rated"}/>
+            <Section type = {"featured"} section_title={"Featured"}/>
             <Footer/>
         </>
     );

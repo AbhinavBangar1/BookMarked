@@ -324,14 +324,14 @@
 }
 
 /* Author */
-.author {
+.authorr {
   font-size: 1.3rem;
   color: var(--text-secondary);
   margin-bottom: 2rem;
   font-weight: 500;
 }
 
-.author::before {
+.authorr::before {
   content: "by ";
   color: var(--text-light);
   font-weight: 400;

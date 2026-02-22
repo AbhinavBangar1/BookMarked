@@ -4,22 +4,13 @@ import redisClient from "../redisClient.js";
 
 const router = express.Router();
 
-/*
---------------------------------------------------
- MAIN SEARCH ROUTE
- Supports:
- - /api/search?q=inauthor:John
- - /api/search?genre=fiction
- - /api/search?title=harry
---------------------------------------------------
-*/
+// for section
 router.get("/", async (req, res) => {
   try {
     const { q, genre, type, order, title } = req.query;
 
     let query = q || "";
 
-    // If q not provided, build query from other params
     if (!query) {
       if (genre) query = `subject:${genre}`;
       else if (type) query = type;
@@ -32,7 +23,7 @@ router.get("/", async (req, res) => {
     }
 
     if (!process.env.GOOGLE_BOOKS_API_KEY) {
-      return res.status(500).json({ error: "Google Books API key missing" });
+      return res.status(500).json({ error: "New York API key missing" });
     }
 
     const cacheKey = `search:${query}`;
@@ -40,15 +31,15 @@ router.get("/", async (req, res) => {
     // Check Redis cache
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log("✅ Returning cached search results");
+      console.log("Returning cached search results");
       return res.json(JSON.parse(cachedData));
     }
 
     const URL = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
       query
-    )}&maxResults=12&orderBy=relevance&key=${process.env.GOOGLE_BOOKS_API_KEY}`;
+    )}&maxResults=10&orderBy=relevance&key=${process.env.GOOGLE_BOOKS_API_KEY}`;
 
-    console.log("🌐 Fetching from Google Books:", URL);
+    console.log("Fetching from Google Books:", URL);
 
     const response = await axios.get(URL);
 
@@ -64,14 +55,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-/*
---------------------------------------------------
- SEARCH BAR ROUTE
- Example:
- - /api/search/specific?author=rowling
- - /api/search/specific?title=harry
---------------------------------------------------
-*/
+
+// for search bar
 router.get("/specific", async (req, res) => {
   try {
     const { author, title, isbn, publisher } = req.query;

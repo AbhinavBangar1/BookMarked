@@ -7,9 +7,9 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 96vw;
+    width: 100vw;
     height: 9vh;
-    padding-left: 2vw;
+    padding-left: 5vw;
     padding-right: 4vw;
     margin-bottom: 3vh;
     border-bottom-left-radius: 7px;
@@ -24,18 +24,16 @@
     display: flex;
     align-items: center;
     width: auto;
-    gap: 1rem;
+    gap: 0.1rem;
     vertical-align: middle;
 }
 
 .sitename {
-    /* border : 2px solid red ; */
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
     font-weight: bold;
-    /* width: 3vw; */
-    padding-bottom: 0px;
-    background-color: teal;
-    border: teal;
+    color: white;
+    background: none;
+    border: none;
 }
 
 .booksicon {

@@ -8,7 +8,7 @@
 
 .quote-container {
   background: white;
-  max-width: 500px;
+  max-width: 90vw;
   padding: 0.5rem 1rem;
   border-radius: 16px;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
@@ -37,7 +37,7 @@
 .author {
   text-align: right;
   font-size: 1rem;
-  font-weight: 400;
+  font-weight: 700;
   color: #666;
   font-style: italic;
 }
