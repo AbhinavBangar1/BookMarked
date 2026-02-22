@@ -120,7 +120,6 @@ function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChang
                 {isOverflowing && <span>{title}</span>}
               </div>
             </h3>
-        <span className="cover-meta">{genre}</span>
       </div>
     </div>
   </div>
