@@ -638,7 +638,7 @@ function BookProfile() {
           <div className="book-info-section">
             <h1 className="profile-title">{info.title}</h1>
 
-            <p className="author">
+            <p className="authorr">
               {info.authors.join(", ") || "Unknown Author"}
             </p>
 

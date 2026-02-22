@@ -1,20 +1,14 @@
 .book-card {
-  width: 180px;
-  background: #ffffff;
-  border-radius: 14px;
+  width: 200px;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* hover stays same */
 .book-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
 .book-card-link {
@@ -22,97 +16,111 @@
   color: inherit;
 }
 
-/* cover-wrapper is already perfect */
 .cover-wrapper {
   position: relative;
   width: 100%;
   aspect-ratio: 2 / 3;
   overflow: hidden;
+  border-radius: 18px;
 }
 
 .cover-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-/* bookmark button */
+.cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.85) 5%,
+    rgba(0, 0, 0, 0.6) 30%,
+    rgba(0, 0, 0, 0.2) 55%,
+    rgba(0, 0, 0, 0) 75%
+  );
+}
+
+
 .bookmark-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(255, 255, 255, 0.9);
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.95);
   border: none;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #6b7280;
+  z-index: 2;
+  color: #333;
 }
 
 .bookmark-btn:hover {
-  background: #ffffff;
-  transform: scale(1.05);
-  color: #2f7f7a;
+  transform: scale(1.08);
 }
 
-.bookmark-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Bookmarked state */
 .bookmark-btn.bookmarked {
-  background: rgba(47, 127, 122, 0.95);
-  color: #ffffff;
+  background: #ffffff;
+  color: #111;
 }
 
-.bookmark-btn.bookmarked:hover {
-  background: #2f7f7a;
-  transform: scale(1.05);
-}
 
-/* Active animation */
-@keyframes bookmark-pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.85); }
-  100% { transform: scale(1.05); }
-}
-
-.bookmark-btn:active {
-  animation: bookmark-pop 0.3s ease;
-}
-
-.book-info {
-  padding: 0.75rem 0.9rem 1rem;
+.cover-info {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 2;
+  overflow: hidden; /* important */
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  flex-grow: 1;
 }
 
-.book-title {
-  font-size: 1rem;
+.cover-title {
+  font-size: 1.05rem;
   font-weight: 600;
-  color: #1f2933;
-  line-height: 1.3;
+  color: #ffffff;
   margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.3;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+
   overflow: hidden;
+  white-space: nowrap;
 }
 
-.book-genre {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-top: auto;
+.marquee {
+  display: inline-flex;
+  gap: 60px;
+}
+
+.marquee span {
+  flex-shrink: 0;
+}
+
+/* Animate only when both overflow AND hover */
+.book-card:hover .marquee.animate {
+  animation: marqueeScroll 8s linear infinite;
+}
+
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.cover-meta {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
 }
