@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useRef , useState , useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChange }) {
+function BookCard({ id, img, title, isBookmarked = false, onBookmarkChange , source , bookData }) {
   const [bookmarked, setBookmarked] = useState(isBookmarked);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
@@ -98,7 +98,7 @@ function BookCard({ id, img, title, genre, isBookmarked = false, onBookmarkChang
   };
 
   return (
-    <Link to={`/book/${id}`} className="book-card-link">
+    <Link to={ source ? `/book/${id}?source=${source}` : `/book/${id}` } state={{ bookData }} className="book-card-link">
   <div className="book-card">
     <div className="cover-wrapper">
       <img src={img} alt={title} />

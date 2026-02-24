@@ -4,58 +4,6 @@ import redisClient from "../redisClient.js";
 
 const router = express.Router();
 
-// for section
-router.get("/", async (req, res) => {
-  try {
-    const { q, genre, type, order, title } = req.query;
-
-    let query = q || "";
-
-    if (!query) {
-      if (genre) query = `subject:${genre}`;
-      else if (type) query = type;
-      else if (title) query = title;
-      else if (order) query = order;
-    }
-
-    if (!query) {
-      return res.status(400).json({ error: "No search query provided" });
-    }
-
-    if (!process.env.GOOGLE_BOOKS_API_KEY) {
-      return res.status(500).json({ error: "New York API key missing" });
-    }
-
-    const cacheKey = `search:${query}`;
-
-    // Check Redis cache
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      console.log("Returning cached search results");
-      return res.json(JSON.parse(cachedData));
-    }
-
-    const URL = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
-      query
-    )}&maxResults=10&orderBy=relevance&key=${process.env.GOOGLE_BOOKS_API_KEY}`;
-
-    console.log("Fetching from Google Books:", URL);
-
-    const response = await axios.get(URL);
-
-    const books = response.data.items?.slice(0, 12) || [];
-
-    // Cache results for 20 minutes
-    await redisClient.setEx(cacheKey, 1200, JSON.stringify(books));
-
-    res.json(books);
-  } catch (error) {
-    console.error("Search error:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to search books" });
-  }
-});
-
-
 // for search bar
 router.get("/specific", async (req, res) => {
   try {
@@ -76,7 +24,7 @@ router.get("/specific", async (req, res) => {
       query
     )}&maxResults=30&key=${process.env.GOOGLE_BOOKS_API_KEY}`;
 
-    console.log("🌐 Google Books URL:", URL);
+    console.log("Google Books URL:", URL);
 
     const response = await axios.get(URL);
 
@@ -87,11 +35,8 @@ router.get("/specific", async (req, res) => {
   }
 });
 
-/*
---------------------------------------------------
- AUTHOR IMAGE ROUTE
---------------------------------------------------
-*/
+
+//Author image 
 router.get("/author-image", async (req, res) => {
   try {
     const { name } = req.query;
@@ -112,7 +57,7 @@ router.get("/author-image", async (req, res) => {
       return res.json(null);
     }
 
-    // Pick the best matching author, not just the first result
+    
     const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
     const target = normalize(name);
     const author =

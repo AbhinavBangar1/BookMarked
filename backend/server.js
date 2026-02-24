@@ -7,6 +7,8 @@ import quoteRoutes from "./routes/quote.js";
 import genreRoutes from "./routes/genre.js";
 import bookRoutes from "./routes/book.js";
 import openLibraryRoutes from "./routes/openlibrary.js";
+import bigbookRoutes from "./routes/bigbook.js";
+import newyorkRoutes from "./routes/nyt.js";
 import bookmarkRoutes from "./routes/bookmark.js";
 import ratingRoutes from "./routes/rating.js";
 import reviewRoutes from "./routes/review.js";
@@ -26,6 +28,8 @@ app.use("/api/quote", quoteRoutes);
 app.use("/api/genre", genreRoutes);
 app.use("/api/book", bookRoutes);
 app.use("/api/openlibrary/book", openLibraryRoutes);
+app.use("/api/bigbook", bigbookRoutes);
+app.use("/api/nyt", newyorkRoutes);
 app.use("/api/bookmark", requireAuth, bookmarkRoutes);
 
 app.use("/api/supabase/rating", ratingRoutes);
