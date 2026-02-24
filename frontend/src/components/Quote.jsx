@@ -10,9 +10,13 @@ function Quote() {
   useEffect(() => {
     fetch(`/api/quote`)
       .then(res => res.json())
-      .then(data => setResult(data))
+      .then(data => {
+        if (data?.quote) {
+          setResult(data);
+          setLoading(false);
+        }
+      })
       .catch(err => console.log(err))
-      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {

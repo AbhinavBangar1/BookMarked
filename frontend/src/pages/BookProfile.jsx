@@ -1,12 +1,17 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BookCard from "../components/BookCard";
 import "./BookProfile.css";
+import toast from "react-hot-toast";
 
 function BookProfile() {
   const { id } = useParams();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const stateBook = location.state?.bookData;
+  const source = queryParams.get("source") || null;
   const navigate = useNavigate();
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +53,7 @@ function BookProfile() {
         );
 
         if (!supabaseTokenKey) {
-          console.log('❌ No Supabase auth token found');
+          console.log('No Supabase auth token found');
           return;
         }
 
@@ -81,7 +86,7 @@ function BookProfile() {
                 setCurrentUserId(session.user.id);
               }
 
-              console.log('✅ Supabase auth found:', {
+              console.log('Supabase auth found:', {
                 hasToken: true,
                 userId: session.user?.id || 'unknown',
                 tokenPreview: session.access_token.substring(0, 20) + '...'
@@ -102,17 +107,40 @@ function BookProfile() {
   useEffect(() => {
     async function fetchBook() {
       try {
-        const isOpenLibrary =
-          id.startsWith("OL") || id.startsWith("works");
+        setLoading(true);
 
-        const endpoint = isOpenLibrary
-          ? `http://localhost:5001/api/openlibrary/book/${id}`
-          : `http://localhost:5001/api/book/${id}`;
+        let endpoint = "";
+        let isOpenLibrary = false;
+        let finalData = null;
 
+        if (source === "openlibrary") {
+          endpoint = `http://localhost:5001/api/openlibrary/book/${id}`;
+          isOpenLibrary = true;
+        }
+        else if (source === "bigbook") {
+          endpoint = `http://localhost:5001/api/bigbook/${id}`;
+          isOpenLibrary = true;
+        }
+        else if (source === "nyt" && stateBook) {
+          setBook({ data: stateBook, isOpenLibrary: false });
+          setLoading(false);
+          return;
+        }
+        else {
+          if (id.startsWith("OL")) {
+            endpoint = `http://localhost:5001/api/openlibrary/book/${id}`;
+            isOpenLibrary = true;
+          } else {
+            endpoint = `http://localhost:5001/api/book/${id}`;
+          }
+        }
         const res = await fetch(endpoint);
-        const data = await res.json();
+        if (!res.ok) throw new Error("Failed to fetch book");
 
-        setBook({ data, isOpenLibrary });
+        const data = await res.json();
+        finalData = data;
+        setBook({ data: finalData, isOpenLibrary });
+
       } catch (err) {
         console.error("Failed to fetch book", err);
       } finally {
@@ -121,7 +149,7 @@ function BookProfile() {
     }
 
     fetchBook();
-  }, [id]);
+  }, [id, source]);
 
   // Load user's current reading status for this book
   useEffect(() => {
@@ -150,46 +178,66 @@ function BookProfile() {
     fetchReadingStatus();
   }, [isLoggedIn, id, authToken]);
 
-  const info = useMemo(() => {
-    if (!book?.data) return null;
+const info = useMemo(() => {
+  if (!book?.data) return null;
 
-    const { data, isOpenLibrary } = book;
+  const { data, isOpenLibrary } = book;
 
-    return isOpenLibrary
-      ? {
-        title: data.title,
-        authors: data.authors?.map(a => a.name) || [],
-        description:
-          typeof data.description === "string"
-            ? data.description
-            : data.description?.value,
-        image: data.covers?.length
-          ? `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg`
-          : null,
-        categories: data.subjects || [],
-        publishedDate: data.first_publish_date,
-        pages: data.number_of_pages,
-        publisher: data.publishers?.[0],
-        language: data.languages?.[0]?.key?.replace("/languages/", ""),
-        isbn: data.isbn_13?.[0] || data.isbn_10?.[0],
-        averageRating: null,
-        ratingsCount: null,
-      }
-      : {
-        title: data.volumeInfo?.title,
-        authors: data.volumeInfo?.authors || [],
-        description: data.volumeInfo?.description,
-        image: data.volumeInfo?.imageLinks?.thumbnail,
-        categories: data.volumeInfo?.categories || [],
-        publishedDate: data.volumeInfo?.publishedDate,
-        pages: data.volumeInfo?.pageCount,
-        publisher: data.volumeInfo?.publisher,
-        language: data.volumeInfo?.language,
-        isbn: data.volumeInfo?.industryIdentifiers?.[0]?.identifier,
-        averageRating: data.volumeInfo?.averageRating,
-        ratingsCount: data.volumeInfo?.ratingsCount,
-      };
-  }, [book]);
+  if (source === "nyt") {
+    return {
+      title: data.title,
+      authors: [data.author],
+      description: data.description,
+      image: data.book_image,
+      categories: [],
+      publishedDate: null,
+      pages: null,
+      publisher: data.publisher,
+      language: null,
+      isbn: data.primary_isbn13,
+      averageRating: null,
+      ratingsCount: null,
+    };
+  }
+
+  if (isOpenLibrary) {
+    return {
+      title: data.title,
+      authors: data.authors?.map(a => a.name) || [],
+      description:
+        typeof data.description === "string"
+          ? data.description
+          : data.description?.value,
+      image: data.covers?.length
+        ? `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg`
+        : null,
+      categories: data.subjects || [],
+      publishedDate: data.first_publish_date,
+      pages: data.number_of_pages,
+      publisher: data.publishers?.[0],
+      language: data.languages?.[0]?.key?.replace("/languages/", ""),
+      isbn: data.isbn_13?.[0] || data.isbn_10?.[0],
+      averageRating: null,
+      ratingsCount: null,
+    };
+  }
+
+  return {
+    title: data.volumeInfo?.title,
+    authors: data.volumeInfo?.authors || [],
+    description: data.volumeInfo?.description,
+    image: data.volumeInfo?.imageLinks?.thumbnail,
+    categories: data.volumeInfo?.categories || [],
+    publishedDate: data.volumeInfo?.publishedDate,
+    pages: data.volumeInfo?.pageCount,
+    publisher: data.volumeInfo?.publisher,
+    language: data.volumeInfo?.language,
+    isbn: data.volumeInfo?.industryIdentifiers?.[0]?.identifier,
+    averageRating: data.volumeInfo?.averageRating,
+    ratingsCount: data.volumeInfo?.ratingsCount,
+  };
+
+}, [book, source]);
 
   // Fetch book statistics from Supabase
   useEffect(() => {
@@ -318,10 +366,10 @@ function BookProfile() {
 
   // Handle login requirement
   const requireLogin = (callback) => {
-    console.log('🔐 requireLogin check:', { isLoggedIn, hasToken: !!authToken });
+    console.log('requireLogin check:', { isLoggedIn, hasToken: !!authToken });
 
     if (!isLoggedIn || !authToken) {
-      alert('Please sign in to continue');
+      toast.error("Please sign in to continue");
       navigate('/auth');
       return false;
     }
@@ -333,7 +381,7 @@ function BookProfile() {
   const handleStatusChange = (newStatus) => {
     requireLogin(async () => {
       try {
-        console.log('📝 Updating status to:', newStatus);
+        console.log('Updating status to:', newStatus);
 
         const response = await fetch('http://localhost:5001/api/reading-status', {
           method: 'POST',
@@ -357,10 +405,10 @@ function BookProfile() {
 
         setStatus(newStatus);
         setShowStatusDialog(false);
-        console.log('✅ Status updated successfully');
+        console.log('Status updated successfully');
       } catch (err) {
         console.error('Failed to update status', err);
-        alert('Failed to update reading status: ' + err.message);
+        toast.error('Failed to update reading status: ' + err.message);
       }
     });
   };
@@ -369,7 +417,7 @@ function BookProfile() {
   const handleRatingClick = (rating) => {
     requireLogin(async () => {
       try {
-        console.log('⭐ Saving rating:', rating);
+        console.log('Saving rating:', rating);
 
         if (rating === 0) {
           // Delete rating
@@ -386,7 +434,7 @@ function BookProfile() {
           }
 
           setUserRating(0);
-          console.log('✅ Rating cleared successfully');
+          console.log('Rating cleared successfully');
         } else {
           // Save rating
           const response = await fetch('http://localhost:5001/api/supabase/rating', {
@@ -407,7 +455,7 @@ function BookProfile() {
           }
 
           setUserRating(rating);
-          console.log('✅ Rating saved successfully');
+          console.log('Rating saved successfully');
         }
 
         // Refresh stats
@@ -420,7 +468,7 @@ function BookProfile() {
         }));
       } catch (err) {
         console.error('Failed to save rating', err);
-        alert('Failed to save rating: ' + err.message);
+        toast.error('Failed to save rating: ' + err.message);
       }
     });
   };
@@ -431,7 +479,7 @@ function BookProfile() {
 
     requireLogin(async () => {
       try {
-        console.log('📝 Submitting review...');
+        console.log('Submitting review...');
 
         const url = editingReviewId
           ? `http://localhost:5001/api/supabase/reviews/${editingReviewId}`
@@ -490,10 +538,10 @@ function BookProfile() {
           totalRatings: ratingData.count
         }));
 
-        console.log('✅ Review submitted successfully');
+        console.log('Review submitted successfully');
       } catch (err) {
         console.error('Failed to submit review', err);
-        alert('Failed to submit review: ' + err.message);
+        toast.error('Failed to submit review: ' + err.message);
       }
     });
   };
@@ -539,10 +587,10 @@ function BookProfile() {
         totalRatings: ratingData.count
       }));
 
-      console.log('✅ Review deleted successfully');
+      console.log('Review deleted successfully');
     } catch (err) {
       console.error('Failed to delete review', err);
-      alert('Failed to delete review: ' + err.message);
+      toast.error('Failed to delete review: ' + err.message);
     }
   };
 

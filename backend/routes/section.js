@@ -15,10 +15,10 @@ router.get('/', async (req, res) => {
     const cacheKey = type;
     const cachedData = await redisClient.get(cacheKey);
 
-    // if (cachedData) {
-    //   console.log(`Found ${type} in cache`);
-    //   return res.json(JSON.parse(cachedData));
-    // }
+    if (cachedData) {
+      console.log(`Found ${type} in cache`);
+      return res.json(JSON.parse(cachedData));
+    }
     let url = "";
 
     if (type === "bestsellers") {
@@ -27,9 +27,9 @@ router.get('/', async (req, res) => {
 
     else if (type === "featured") {
 
-        const bigUrl = `https://api.bigbookapi.com/search-books?genres=fiction&number=15&api-key=${process.env.BIG_BOOK_API}`;
-
-        const bigResponse = await axios.get(bigUrl);
+        url = `https://api.bigbookapi.com/search-books?genres=fiction&number=15&api-key=${process.env.BIG_BOOK_API}`;
+        console.log(`Fetching ${type} from url:`, url);
+        const bigResponse = await axios.get(url);
         const books = bigResponse.data.books.flat();
 
         const enrichedBooks = await Promise.all(

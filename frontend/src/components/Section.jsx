@@ -29,10 +29,11 @@ useEffect(() => {
         bookList = data.books.flat();
       }
 
-      setBooks(bookList);
+        if (bookList.length>0){
+          setBooks(bookList);
+          setLoading(false)}
     })
     .catch(err => console.error(err))
-    .finally(() => setLoading(false));
 }, [type]);
 
   return (
@@ -68,13 +69,29 @@ useEffect(() => {
           }
           const title = book.title ||book.volumeInfo?.title ||"No Title";
           const genre = book.categories?.[0] ||book.volumeInfo?.categories?.[0] ||book.subject?.[0] ||"Unknown";
-          const id = book.primary_isbn13 ||book.key ||book.id ||title;
+            let id = null;
+            let source = null;
+
+            if (book.primary_isbn13 && book.book_image) {
+              id = book.primary_isbn13;
+              source = "nyt";
+            }
+            else if (book.key) {
+              id = book.key.replace("/works/", "");
+              source = "openlibrary";
+            }
+            else if (book.id && book.authors) {
+              id = book.id;
+              source = "bigbook";
+            }
           return (
             <BookCard
               key={id}
               id={id}
               img={img}
               title={title}
+              source = {source}
+              bookData={book}
               // genre={genre}
             />
           );
