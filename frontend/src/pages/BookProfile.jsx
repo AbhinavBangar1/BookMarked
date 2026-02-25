@@ -141,6 +141,23 @@ function BookProfile() {
         finalData = data;
         setBook({ data: finalData, isOpenLibrary });
 
+        // ── Save book to database (fire-and-forget) ────────────────────────
+        // Only fires for OpenLibrary books — bookid is varchar storing OL work ID
+        if (isOpenLibrary && id?.startsWith("OL")) {
+          fetch("http://localhost:5001/api/save-book", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              olId: id,
+              isbn: finalData?.isbn_13?.[0] ?? finalData?.isbn_10?.[0] ?? null,
+            }),
+          })
+            .then(r => r.json())
+            .then(result => console.log("Book saved to DB:", result.cached ? "already existed" : "newly inserted"))
+            .catch(err => console.error("Failed to save book to DB:", err));
+        }
+        // ──────────────────────────────────────────────────────────────────
+
       } catch (err) {
         console.error("Failed to fetch book", err);
       } finally {
@@ -322,13 +339,13 @@ const info = useMemo(() => {
           const res = await fetch(
             `https://openlibrary.org/search.json?author=${encodeURIComponent(
               author
-            )}&limit=6`
+            )}&limit=10`
           );
           const data = await res.json();
 
           books =
             data?.docs
-              ?.filter(b => b.cover_i && b.title !== info.title)
+              ?.filter(b => b.cover_i && b.key && b.title !== info.title)
               .slice(0, 6)
               .map(b => ({
                 id: b.key.replace("/works/", ""),
@@ -841,15 +858,17 @@ const info = useMemo(() => {
               More books by {info.authors[0]}
             </h3>
             <div className="more-books-row">
-              {moreBooks.map(b => (
-                <BookCard
-                  key={b.id}
-                  id={b.id}
-                  img={b.image}
-                  title={b.title}
-                  genre={b.genre}
-                />
-              ))}
+              {moreBooks
+                .filter(b => b.id)
+                .map(b => (
+                  <BookCard
+                    key={b.id}
+                    id={b.id}
+                    img={b.image}
+                    title={b.title}
+                    genre={b.genre}
+                  />
+                ))}
             </div>
           </div>
         )}
