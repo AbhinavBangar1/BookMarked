@@ -1,3 +1,4 @@
+
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
@@ -15,6 +16,7 @@ import reviewRoutes from "./routes/review.js";
 import authorRoutes from "./routes/author.js";
 import readingStatusRoutes from "./routes/readingStatus.js"; 
 import { requireAuth } from "./middleware/requireAuth.js";
+import saveBookRouter from "./routes/saveBook.js";
 
 const app = express();
 const PORT = 5001;
@@ -36,6 +38,7 @@ app.use("/api/supabase/rating", ratingRoutes);
 app.use("/api/supabase/reviews", reviewRoutes);
 app.use("/api/author", authorRoutes);
 app.use("/api/reading-status", readingStatusRoutes); 
+app.use("/api/save-book", saveBookRouter);
 
 app.listen(PORT, () => {
   console.log(`server running on http://localhost:${PORT}`);
