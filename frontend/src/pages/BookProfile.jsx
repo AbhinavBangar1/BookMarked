@@ -123,8 +123,33 @@ function BookProfile() {
         }
         else if (source === "nyt" && stateBook) {
           setBook({ data: stateBook, isOpenLibrary: false });
+          
+          // Save NYT book via ISBN → OL lookup (fire-and-forget)
+          if (id) {
+            fetch("http://localhost:5001/api/nyt/" + id)
+              .then(r => r.json())
+              .then(olData => {
+                const olId = olData?.key?.replace("/works/", "");
+                if (olId) {
+                  return fetch("http://localhost:5001/api/save-book", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ olId }),
+                  });
+                }
+              })
+              .then(r => r?.json())
+              .then(result => result && console.log("NYT Book saved to DB:", result.cached ? "already existed" : "newly inserted"))
+              .catch(err => console.error("Failed to save NYT book:", err));
+          }
+
           setLoading(false);
           return;
+}
+        else if (source === "nyt" && !stateBook) {
+          // NYT book opened directly via URL — fetch from OL using ISBN
+          endpoint = `http://localhost:5001/api/nyt/${id}`;
+          isOpenLibrary = true;
         }
         else {
           if (id.startsWith("OL")) {
@@ -134,6 +159,7 @@ function BookProfile() {
             endpoint = `http://localhost:5001/api/book/${id}`;
           }
         }
+
         const res = await fetch(endpoint);
         if (!res.ok) throw new Error("Failed to fetch book");
 
@@ -142,19 +168,24 @@ function BookProfile() {
         setBook({ data: finalData, isOpenLibrary });
 
         // ── Save book to database (fire-and-forget) ────────────────────────
-        // Only fires for OpenLibrary books — bookid is varchar storing OL work ID
-        if (isOpenLibrary && id?.startsWith("OL")) {
-          fetch("http://localhost:5001/api/save-book", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              olId: id,
-              isbn: finalData?.isbn_13?.[0] ?? finalData?.isbn_10?.[0] ?? null,
-            }),
-          })
-            .then(r => r.json())
-            .then(result => console.log("Book saved to DB:", result.cached ? "already existed" : "newly inserted"))
-            .catch(err => console.error("Failed to save book to DB:", err));
+        // Works for openlibrary, bigbook, and nyt sources — they all return
+        // OpenLibrary work JSON which has a `key` field like /works/OL45804W
+        if (isOpenLibrary) {
+          const olId = finalData?.key?.replace("/works/", "") || (id?.startsWith("OL") ? id : null);
+
+          if (olId) {
+            fetch("http://localhost:5001/api/save-book", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                olId: olId,
+                isbn: finalData?.isbn_13?.[0] ?? finalData?.isbn_10?.[0] ?? null,
+              }),
+            })
+              .then(r => r.json())
+              .then(result => console.log("Book saved to DB:", result.cached ? "already existed" : "newly inserted"))
+              .catch(err => console.error("Failed to save book to DB:", err));
+          }
         }
         // ──────────────────────────────────────────────────────────────────
 
