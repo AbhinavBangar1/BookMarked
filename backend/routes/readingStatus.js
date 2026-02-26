@@ -49,7 +49,7 @@ router.post("/", requireAuth, async (req, res) => {
     const userId = req.user.id;
     const { bookId, status, title, coverImage, genre } = req.body;
 
-    console.log('📝 Reading status POST request:', { userId, bookId, status });
+    console.log('Reading status POST request:', { userId, bookId, status });
 
     if (!userId || !bookId || !status) {
       return res.status(400).json({ 
@@ -87,7 +87,7 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(500).json({ error: "Failed to update reading status: " + error.message });
     }
 
-    console.log('✅ Reading status updated successfully');
+    console.log('Reading status updated successfully');
     res.json({ 
       message: "Reading status updated successfully", 
       data: data
