@@ -98,7 +98,7 @@ router.post("/", requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { review, bookId, rating } = req.body;
 
-  console.log('📝 Review POST request:', { userId, bookId, hasReview: !!review, rating });
+  console.log('Review POST request:', { userId, bookId, hasReview: !!review, rating });
   
   try {
     // Insert review with rating (reviewid will be auto-generated)
@@ -119,7 +119,7 @@ router.post("/", requireAuth, async (req, res) => {
       throw error;
     }
     
-    console.log('✅ Review inserted:', data);
+    console.log('Review inserted:', data);
     
     // ALSO save rating to the rating table (for average calculation)
     if (rating) {
@@ -155,7 +155,7 @@ router.post("/", requireAuth, async (req, res) => {
       UserName: userName
     };
 
-    console.log('✅ Review created successfully');
+    console.log('Review created successfully');
     res.json(reviewResponse);
   } catch (err) {
     console.error("Review create failed:", err);
@@ -169,7 +169,7 @@ router.put("/:reviewId", requireAuth, async (req, res) => {
   const { reviewId } = req.params;
   const { review, rating } = req.body;
 
-  console.log('📝 Review UPDATE request:', { userId, reviewId, hasReview: !!review, rating });
+  console.log('Review UPDATE request:', { userId, reviewId, hasReview: !!review, rating });
   
   try {
     // Update review
@@ -206,7 +206,7 @@ router.put("/:reviewId", requireAuth, async (req, res) => {
         });
     }
     
-    console.log('✅ Review updated successfully');
+    console.log('Review updated successfully');
     res.json({ 
       message: "Review updated successfully",
       data: {
@@ -226,7 +226,7 @@ router.delete("/:reviewId", requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { reviewId } = req.params;
 
-  console.log('🗑️ Review DELETE request:', { userId, reviewId });
+  console.log('Review DELETE request:', { userId, reviewId });
   
   try {
     const { error } = await supabase
@@ -240,7 +240,7 @@ router.delete("/:reviewId", requireAuth, async (req, res) => {
       throw error;
     }
     
-    console.log('✅ Review deleted successfully');
+    console.log('Review deleted successfully');
     res.json({ message: "Review deleted successfully" });
   } catch (err) {
     console.error("Review delete failed:", err);

@@ -9,10 +9,10 @@ router.get("/",async(req , res) => {
         const {genre} = req.query;
         const cacheKey = `books:${genre.toLowerCase()}`
         const cached = await redisClient.get(cacheKey);
-        // if (cached){
-        //     console.log("cache hit for:" , genre);
-        //     return res.json(JSON.parse(cached));
-        // }
+        if (cached){
+            console.log("cache hit for:" , genre);
+            return res.json(JSON.parse(cached));
+        }
 
         const url = `https://openlibrary.org/subjects/${encodeURIComponent(genre)}.json?limit=55`;
         // const url = `https://api.bigbookapi.com/search-books?genres=${encodeURIComponent(genre)}&number=55&api-key=${process.env.BIG_BOOK_API}`;

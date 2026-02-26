@@ -1,7 +1,7 @@
 import express from "express";
 import axios from "axios";
 import redisClient from "../redisClient.js";
-
+import { storeBookIfNotExists } from "../utils/storeBookIfNotExists.js";
 const router = express.Router();
 
 router.get('/:id' , async(req , res)=> {
@@ -27,6 +27,18 @@ router.get('/:id' , async(req , res)=> {
         console.log(`Fetching book details from open library using olid(big book) :`,url);
         const bookres = await axios.get(url);
         await redisClient.setEx(cacheKey,1200,JSON.stringify(bookres.data));
+
+        // await storeBookIfNotExists({
+        //     bookid: bookres.data.key.replace("/works/", ""),
+        //     title: bookres.data.title,
+        //     description:
+        //         typeof bookres.data.description === "string"
+        //             ? bookres.data.description
+        //             : bookres.data.description?.value ?? null,
+        //     coverimage: bookres.data.covers?.length
+        //         ? `https://covers.openlibrary.org/b/id/${bookres.data.covers[0]}-L.jpg`
+        //         : null,
+        // });
         res.json(bookres.data);
 
     }catch(error){

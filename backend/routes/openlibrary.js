@@ -1,6 +1,6 @@
 import express from "express";
 import fetch from "node-fetch";
-
+import { storeBookIfNotExists } from "../utils/storeBookIfNotExists.js";
 const router = express.Router();
 
 router.get("/:id", async (req, res) => {
@@ -65,6 +65,21 @@ router.get("/:id", async (req, res) => {
       );
       workData.authors = resolvedAuthors;
     }
+
+    // await storeBookIfNotExists({
+    //   bookid: workData.key.replace("/works/", ""), // OLxxxxW
+    //   title: workData.title,
+    //   description:
+    //     typeof workData.description === "string"
+    //       ? workData.description
+    //       : workData.description?.value ?? null,
+    //   publishedyear: workData.first_publish_date
+    //     ? parseInt(workData.first_publish_date)
+    //     : null,
+    //   coverimage: workData.covers?.length
+    //     ? `https://covers.openlibrary.org/b/id/${workData.covers[0]}-L.jpg`
+    //     : null,
+    // });
 
     res.json(workData);
 

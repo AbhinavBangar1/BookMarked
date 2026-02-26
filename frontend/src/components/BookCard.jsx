@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 function BookCard({ id, img, title, isBookmarked = false, onBookmarkChange, source, bookData, genre }) {
   const [bookmarked, setBookmarked] = useState(isBookmarked);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { session, user } = useAuth();
 
   const titleRef = useRef(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -22,16 +22,12 @@ function BookCard({ id, img, title, isBookmarked = false, onBookmarkChange, sour
     return () => window.removeEventListener("resize", checkOverflow);
   }, [title]);
 
-  // Called when the user clicks the card to open the book detail page.
-  // Saves the book to the DB in the background — does NOT block navigation.
   const handleCardClick = () => {
     if (!id) return;
 
-    // Only save books that come from OpenLibrary (OL prefix = work/edition ID)
     const olId = typeof id === "string" && id.startsWith("OL") ? id : null;
     if (!olId) return;
 
-    // Fire-and-forget — we don't await this so navigation is instant
     fetch("http://localhost:5001/api/save-book", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -47,59 +43,72 @@ function BookCard({ id, img, title, isBookmarked = false, onBookmarkChange, sour
     e.preventDefault();
     e.stopPropagation();
 
-    if (!user) {
-      window.location.href = '/auth';
-      return;
-    }
-
     if (loading) return;
     setLoading(true);
 
     try {
-      const token = user.accessToken;
+      const token = session?.access_token;
+
+      if (!token) {
+        window.location.href = "/auth";
+        return;
+      }
 
       if (bookmarked) {
+        // DELETE bookmark
         const response = await fetch(
-          `/api/bookmark?userId=${user.id}&bookId=${id}`,
+          `http://localhost:5001/api/bookmark?bookId=${id}`,
           {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
+
         if (response.ok) {
           setBookmarked(false);
           if (onBookmarkChange) onBookmarkChange(id);
+        } else {
+          console.error("Delete failed");
         }
+
       } else {
-        const response = await fetch('/api/bookmark', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            userId: user.id,
-            bookId: id,
-            title,
-            coverImage: img,
-            genre,           // ✅ now comes from props, not undefined
-          }),
-        });
-        if (response.ok) setBookmarked(true);
+        // ADD bookmark
+        const response = await fetch(
+          "http://localhost:5001/api/bookmark",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              bookId: id,
+            }),
+          }
+        );
+
+        if (response.ok) {
+          setBookmarked(true);
+        } else {
+          const err = await response.json();
+          console.error("Insert failed:", err);
+        }
       }
+
     } catch (error) {
       console.error("Bookmark operation failed:", error);
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <Link
       to={source ? `/book/${id}?source=${source}` : `/book/${id}`}
       state={{ bookData }}
       className="book-card-link"
-      onClick={handleCardClick}   // ← save book on card click
+      onClick={handleCardClick}
     >
       <div className="book-card">
         <div className="cover-wrapper">

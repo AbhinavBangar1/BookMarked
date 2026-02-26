@@ -86,7 +86,7 @@ router.delete("/", requireAuth, async (req, res) => {
     
     if (error) throw error;
     
-    console.log('✅ Rating cleared successfully');
+    console.log('Rating cleared successfully');
     res.json({ message: "Rating cleared successfully" });
   } catch (err) {
     console.error("Rating delete failed:", err);

@@ -1,0 +1,35 @@
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
+export async function storeBookIfNotExists(book) {
+  if (!book?.bookid) return;
+
+  // Proper existence check
+  const { data, error } = await supabase
+    .from("books")
+    .select("bookid")
+    .eq("bookid", book.bookid);
+
+  if (error) {
+    console.error("Select error:", error);
+    return;
+  }
+
+  // If already exists → skip
+  if (data.length > 0) return;
+
+  // Insert
+  const { error: insertError } = await supabase
+    .from("books")
+    .insert([book]);
+
+  if (insertError) {
+    console.error("Insert failed:", insertError);
+  } else {
+    console.log("Book inserted:", book.bookid);
+  }
+}

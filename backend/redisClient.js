@@ -2,7 +2,6 @@ import redis from "redis";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Mock client for when Redis is unavailable
 const mockClient = {
     get: async () => null,
     setEx: async () => { },
@@ -22,9 +21,9 @@ const connectRedis = async () => {
 
         await redisClient.connect();
         client = redisClient;
-        console.log("✅ Connected to Redis");
+        console.log("Connected to Redis");
     } catch (err) {
-        console.warn("⚠️  Redis not available - using in-memory fallback");
+        console.warn("Redis not available - using in-memory fallback");
     }
 };
 

@@ -1,7 +1,7 @@
 import express from "express";
 import axios from "axios";
 import redisClient from "../redisClient.js";
-
+import { storeBookIfNotExists } from "../utils/storeBookIfNotExists.js";
 const router = express.Router();
 
 router.get('/:id' , async(req , res)=> {
@@ -34,6 +34,18 @@ router.get('/:id' , async(req , res)=> {
         console.log("Fetching work JSON:", workUrl);
         const workRes = await axios.get(workUrl);
         const finalData = workRes.data;
+
+        // await storeBookIfNotExists({
+        //     bookid: finalData.key.replace("/works/", ""),
+        //     title: finalData.title,
+        //     description:
+        //         typeof finalData.description === "string"
+        //             ? finalData.description
+        //             : finalData.description?.value ?? null,
+        //     coverimage: finalData.covers?.length
+        //         ? `https://covers.openlibrary.org/b/id/${finalData.covers[0]}-L.jpg`
+        //         : null,
+        // });
         await redisClient.setEx(cacheKey,1200,JSON.stringify(finalData));
         res.json(finalData);
 
