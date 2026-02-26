@@ -32,7 +32,7 @@ function BookCard({ id, img, title, isBookmarked = false, onBookmarkChange, sour
     if (!olId) return;
 
     // Fire-and-forget — we don't await this so navigation is instant
-    fetch("/api/save-book", {
+    fetch("http://localhost:5001/api/save-book", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
