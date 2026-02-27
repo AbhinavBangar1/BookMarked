@@ -14,9 +14,9 @@ function Explore() {
             <Header/>
             <CategoryBar/>
             <Quote/>
-            <Section type = {"bestsellers"} section_title={"BestSellers"}/>
-            <Section type = {"toprated"} section_title={"Top Rated"}/>
-            <Section type = {"featured"} section_title={"Featured"}/>
+            <Section type={"bestseller"} section_title={"Best Sellers"} />
+            <Section type={"toprated"} section_title={"Top Rated"} />
+            <Section type={"popular"} section_title={"Popular"} />
             <Footer/>
         </>
     );
