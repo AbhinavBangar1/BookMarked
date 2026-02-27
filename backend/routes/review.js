@@ -12,14 +12,15 @@ const supabase = createClient(
 // GET review count
 router.get("/count", async (req, res) => {
   const { bookId } = req.query;
-  
+
   try {
     const { count, error } = await supabase
       .from("reviews")
       .select("*", { count: "exact", head: true })
       .eq("bookid", bookId);
-    
+
     if (error) throw error;
+
     res.json({ count: count || 0 });
   } catch (err) {
     console.error("Review count failed:", err);
@@ -27,66 +28,36 @@ router.get("/count", async (req, res) => {
   }
 });
 
-// GET all reviews for a book
+// GET all reviews for a book (WITH USERNAME)
 router.get("/", async (req, res) => {
   const { bookId } = req.query;
-  
+
   try {
     const { data, error } = await supabase
       .from("reviews")
       .select(`
         reviewid,
         review,
-        rating,
         createdat,
-        userid
+        userid,
+        users (
+          username
+        )
       `)
       .eq("bookid", bookId)
       .order("createdat", { ascending: false });
-    
+
     if (error) throw error;
 
-    // Fetch usernames for each review
-    const reviewsWithUsers = await Promise.all(
-      data.map(async (review) => {
-        try {
-          // Get user data from Supabase Auth
-          const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(review.userid);
-          
-          let userName = "Anonymous";
-          
-          if (user) {
-            // Try to get username in order of preference:
-            userName = user.user_metadata?.full_name 
-              || user.user_metadata?.name 
-              || user.user_metadata?.username
-              || user.email?.split('@')[0] 
-              || "Anonymous";
-          }
-          
-          return {
-            ReviewId: review.reviewid,
-            Review: review.review,
-            Rating: review.rating,
-            CreatedAt: review.createdat,
-            UserId: review.userid,
-            UserName: userName
-          };
-        } catch (err) {
-          console.error(`Failed to fetch user ${review.userid}:`, err);
-          return {
-            ReviewId: review.reviewid,
-            Review: review.review,
-            Rating: review.rating,
-            CreatedAt: review.createdat,
-            UserId: review.userid,
-            UserName: "Anonymous"
-          };
-        }
-      })
-    );
-    
-    res.json(reviewsWithUsers);
+    const formatted = data.map((r) => ({
+      ReviewId: r.reviewid,
+      Review: r.review,
+      CreatedAt: r.createdat,
+      UserId: r.userid,
+      UserName: r.users?.username || "Anonymous"
+    }));
+
+    res.json(formatted);
   } catch (err) {
     console.error("Review fetch failed:", err);
     res.status(500).json({ error: err.message });
@@ -96,67 +67,38 @@ router.get("/", async (req, res) => {
 // POST - Create new review
 router.post("/", requireAuth, async (req, res) => {
   const userId = req.user.id;
-  const { review, bookId, rating } = req.body;
+  const { review, bookId } = req.body;
 
-  console.log('Review POST request:', { userId, bookId, hasReview: !!review, rating });
-  
   try {
-    // Insert review with rating (reviewid will be auto-generated)
     const { data, error } = await supabase
       .from("reviews")
       .insert({
-        review: review,
+        review,
         userid: userId,
         bookid: bookId,
-        rating: rating || null,
         createdat: new Date().toISOString()
       })
-      .select()
+      .select(`
+        reviewid,
+        review,
+        createdat,
+        userid,
+        users (
+          username
+        )
+      `)
       .single();
-    
-    if (error) {
-      console.error("Review insert error:", error);
-      throw error;
-    }
-    
-    console.log('Review inserted:', data);
-    
-    // ALSO save rating to the rating table (for average calculation)
-    if (rating) {
-      await supabase
-        .from("rating")
-        .upsert({
-          userid: userId,
-          bookid: bookId,
-          rating: rating
-        }, {
-          onConflict: "userid,bookid"
-        });
-    }
-    
-    // Get user email for display
-    const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
-    
-    let userName = "Anonymous";
-    if (user) {
-      userName = user.user_metadata?.full_name 
-        || user.user_metadata?.name 
-        || user.user_metadata?.username
-        || user.email?.split('@')[0] 
-        || "Anonymous";
-    }
-    
-    const reviewResponse = {
+
+    if (error) throw error;
+
+    res.json({
       ReviewId: data.reviewid,
       Review: data.review,
-      Rating: data.rating,
       CreatedAt: data.createdat,
       UserId: data.userid,
-      UserName: userName
-    };
+      UserName: data.users?.username || "Anonymous"
+    });
 
-    console.log('Review created successfully');
-    res.json(reviewResponse);
   } catch (err) {
     console.error("Review create failed:", err);
     res.status(500).json({ error: err.message });
@@ -167,54 +109,33 @@ router.post("/", requireAuth, async (req, res) => {
 router.put("/:reviewId", requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { reviewId } = req.params;
-  const { review, rating } = req.body;
+  const { review } = req.body;
 
-  console.log('Review UPDATE request:', { userId, reviewId, hasReview: !!review, rating });
-  
   try {
-    // Update review
     const { data, error } = await supabase
       .from("reviews")
-      .update({
-        review: review,
-        rating: rating || null
-      })
+      .update({ review })
       .eq("reviewid", reviewId)
-      .eq("userid", userId) // Ensure user can only update their own reviews
+      .eq("userid", userId)
       .select()
       .single();
-    
-    if (error) {
-      console.error("Review update error:", error);
-      throw error;
-    }
-    
+
+    if (error) throw error;
+
     if (!data) {
-      return res.status(404).json({ error: "Review not found or you don't have permission to edit it" });
+      return res.status(404).json({
+        error: "Review not found or you don't have permission to edit it"
+      });
     }
-    
-    // Update rating table if rating was provided
-    if (rating) {
-      await supabase
-        .from("rating")
-        .upsert({
-          userid: userId,
-          bookid: data.bookid,
-          rating: rating
-        }, {
-          onConflict: "userid,bookid"
-        });
-    }
-    
-    console.log('Review updated successfully');
-    res.json({ 
+
+    res.json({
       message: "Review updated successfully",
       data: {
         ReviewId: data.reviewid,
-        Review: data.review,
-        Rating: data.rating
+        Review: data.review
       }
     });
+
   } catch (err) {
     console.error("Review update failed:", err);
     res.status(500).json({ error: err.message });
@@ -226,22 +147,17 @@ router.delete("/:reviewId", requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { reviewId } = req.params;
 
-  console.log('Review DELETE request:', { userId, reviewId });
-  
   try {
     const { error } = await supabase
       .from("reviews")
       .delete()
       .eq("reviewid", reviewId)
-      .eq("userid", userId); // Ensure user can only delete their own reviews
-    
-    if (error) {
-      console.error("Review delete error:", error);
-      throw error;
-    }
-    
-    console.log('Review deleted successfully');
+      .eq("userid", userId);
+
+    if (error) throw error;
+
     res.json({ message: "Review deleted successfully" });
+
   } catch (err) {
     console.error("Review delete failed:", err);
     res.status(500).json({ error: err.message });
