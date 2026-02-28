@@ -1,0 +1,315 @@
+/* =========================================
+   PREMIUM FRIEND CARD
+   ========================================= */
+.friend-card {
+  background: var(--bg-surface, rgba(255, 255, 255, 0.65));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.9));
+  border-radius: var(--radius-lg, 24px);
+  padding: 32px 24px; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px; 
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+.friend-card:hover {
+  box-shadow: 0 20px 40px -10px rgba(13, 148, 136, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.8);
+  border-color: rgba(13, 148, 136, 0.3);
+  transform: translateY(-4px);
+}
+
+.friend-card-header {
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition */
+}
+
+/* New class to make it feel like a button */
+.clickable-header {
+  cursor: pointer;
+  padding: 8px; /* Adds a bit of invisible padding for a larger click target */
+  border-radius: 16px;
+}
+
+.clickable-header:hover {
+  transform: translateY(-2px) scale(1.02); /* Slight lift and zoom on hover */
+}
+
+.clickable-header:hover .friend-name {
+  color: var(--teal-primary); /* Brand color on hover */
+}
+
+.friend-avatar {
+  width: 80px; 
+  height: 80px;
+  background-color: var(--teal-light, #f0fdfa);
+  color: var(--teal-primary, #0d9488);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 2rem; 
+  border: 2px solid var(--border-glass, rgba(255, 255, 255, 0.9));
+  box-shadow: 0 8px 16px -4px rgba(13, 148, 136, 0.15);
+  flex-shrink: 0;
+}
+
+.friend-name {
+  font-weight: 700; 
+  color: var(--text-dark, #0f172a);
+  font-size: 1.3rem; 
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.3px;
+}
+
+/* Actions */
+/* Actions */
+.friend-card-actions {
+  display: flex;
+  flex-direction: column; /* Stacks the action groups vertically */
+  gap: 12px;
+  width: 100%;
+  margin-top: auto; /* Pushes buttons to the bottom if card grows */
+}
+
+.request-action-group {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.friend-action-btn {
+  flex: 1;
+  padding: 10px 16px; 
+  border-radius: 12px; 
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%; /* Ensures full width when stacked */
+}
+
+/* Beautiful vibrant green for Accept */
+.btn-accept {
+  background-color: #10b981; 
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-accept:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+/* Clean outlined red for Reject */
+.btn-reject {
+  background: transparent;
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.btn-reject:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+  transform: translateY(-1px);
+}
+
+/* Subtle secondary for See Friends */
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-dark, #0f172a);
+  border-color: var(--border-light, rgba(226, 232, 240, 0.8));
+}
+
+.btn-secondary:hover {
+  background: white;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+/* =========================================
+   FRIENDS MODAL (Glassmorphism overlay)
+   ========================================= */
+.friends-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.friends-modal-content {
+  background: var(--bg-surface, rgba(255, 255, 255, 0.85));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.9));
+  border-radius: var(--radius-lg, 24px);
+  width: 100%;
+  max-width: 450px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.friends-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-light, rgba(226, 232, 240, 0.6));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.friends-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text-dark, #0f172a);
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted, #64748b);
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #ef4444;
+}
+
+.friends-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.friend-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  border: 1px solid var(--border-light, rgba(226, 232, 240, 0.6));
+}
+
+.friend-list-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* THIS FIXES THE MODAL AVATARS */
+.friend-list-info .friend-avatar {
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 1.1rem !important;
+  border-width: 1px !important;
+  box-shadow: none !important;
+}
+
+.mutual-tag {
+  background-color: var(--teal-light, #f0fdfa);
+  color: var(--teal-primary, #0d9488);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: 1px solid rgba(13, 148, 136, 0.2);
+}
+
+.loader-text {
+  text-align: center;
+  color: var(--text-muted, #64748b);
+  padding: 20px 0;
+}
+
+/* =========================================
+   PREMIUM MODAL LIST ITEMS & ADD BUTTON
+   ========================================= */
+.friend-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-surface, rgba(255, 255, 255, 0.5));
+  border-radius: 12px;
+  border: 1px solid var(--border-light, rgba(226, 232, 240, 0.6));
+  transition: all 0.3s ease;
+}
+
+.friend-list-item:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: rgba(13, 148, 136, 0.2);
+}
+
+.friend-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* The circular add button */
+.add-friend-mini-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--teal-light, #f0fdfa);
+  color: var(--teal-primary, #0d9488);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(13, 148, 136, 0.1);
+}
+
+.add-friend-mini-btn:hover {
+  background: var(--teal-primary, #0d9488);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(13, 148, 136, 0.3);
+}
+
+/* State when the request is sent */
+.add-friend-mini-btn.sent {
+  background: #f1f5f9;
+  color: #10b981; /* Green checkmark */
+  box-shadow: none;
+  cursor: default;
+  transform: none;
+}
