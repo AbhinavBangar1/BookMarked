@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
@@ -17,6 +16,7 @@ import authorRoutes from "./routes/author.js";
 import readingStatusRoutes from "./routes/readingStatus.js"; 
 import { requireAuth } from "./middleware/requireAuth.js";
 import saveBookRouter from "./routes/saveBook.js";
+import profileRoutes from "./routes/profile.js";
 
 const app = express();
 const PORT = 5001;
@@ -32,6 +32,7 @@ app.use("/api/book", bookRoutes);
 app.use("/api/openlibrary/book", openLibraryRoutes);
 app.use("/api/bigbook", bigbookRoutes);
 app.use("/api/nyt", newyorkRoutes);
+app.use("/profile", profileRoutes);
 app.use("/api/bookmark", requireAuth, bookmarkRoutes);
 
 app.use("/api/supabase/rating", ratingRoutes);
