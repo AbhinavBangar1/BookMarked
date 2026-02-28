@@ -51,7 +51,7 @@ const ProfilePage = () => {
 
   const fetchProfile = async (id) => {
     try {
-      const res = await axios.get(`http://localhost:5001/profile/${id}`);
+      const res = await axios.get(`https://bookmarked-527h.onrender.com/profile/${id}`);
 
       setProfileData(res.data.user || null);
       setReviews(res.data.reviews || []);
@@ -83,7 +83,7 @@ const ProfilePage = () => {
       await Promise.all(bookIdsToFetch.map(async (bookId) => {
         try {
           const res = await axios.get(
-            `http://localhost:5001/api/supabase/rating/my?bookId=${bookId}`,
+            `https://bookmarked-527h.onrender.com/api/supabase/rating/my?bookId=${bookId}`,
             { headers: { Authorization: `Bearer ${session.access_token}` } }
           );
           
@@ -107,7 +107,7 @@ const ProfilePage = () => {
      ============================ */
   const handleAccept = async (requesterId) => {
     try {
-      await axios.put(`http://localhost:5001/profile/friends/accept`, {
+      await axios.put(`https://bookmarked-527h.onrender.com/profile/friends/accept`, {
         userId: user?.id,
         friendId: requesterId
       });
@@ -125,7 +125,7 @@ const ProfilePage = () => {
 
   const handleReject = async (requesterId) => {
     try {
-      await axios.delete(`http://localhost:5001/profile/friends/reject`, {
+      await axios.delete(`https://bookmarked-527h.onrender.com/profile/friends/reject`, {
         data: { userId: user?.id, friendId: requesterId }
       });
 
@@ -137,7 +137,7 @@ const ProfilePage = () => {
 
   const handleAddFriend = async () => {
     try {
-      await axios.post(`http://localhost:5001/profile/friends/request`, {
+      await axios.post(`https://bookmarked-527h.onrender.com/profile/friends/request`, {
         userId: user?.id,
         friendId: profileData.userid
       });

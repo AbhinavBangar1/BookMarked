@@ -15,14 +15,14 @@ function AuthorPage() {
     async function fetchData() {
       try {
         // 1. Fetch Author Details
-        const authorRes = await fetch(`http://localhost:5001/api/author/${id}`);
+        const authorRes = await fetch(`https://bookmarked-527h.onrender.com/api/author/${id}`);
         if (authorRes.ok) {
           const authorData = await authorRes.json();
           setAuthor(authorData);
         }
 
         // 2. Fetch Author's Books
-        const booksRes = await fetch(`http://localhost:5001/api/author/${id}/books`);
+        const booksRes = await fetch(`https://bookmarked-527h.onrender.com/api/author/${id}/books`);
         if (booksRes.ok) {
           const booksData = await booksRes.json();
           setBooks(booksData);
@@ -32,7 +32,7 @@ function AuthorPage() {
             const savePromises = booksData.map((book) => {
               const olId = book.id.replace("/works/", "");
 
-              return fetch("http://localhost:5001/api/save-book", {
+              return fetch("https://bookmarked-527h.onrender.com/api/save-book", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 // Passes coverImage to the payload so it saves in the DB

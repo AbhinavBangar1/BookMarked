@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:5001", // 🔑 MUST be 5001
+        target: "https://bookmarked-527h.onrender.com", // 🔑 MUST be 5001
         changeOrigin: true,
         
       },
