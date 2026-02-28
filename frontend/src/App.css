@@ -1,4 +1,4 @@
-#root {
+/* #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0rem 2rem;
@@ -17,4 +17,26 @@ body::-webkit-scrollbar {
   display: none;
 }
 
+ */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0rem 2rem;
+  text-align: center;
+}
 
+html, body {
+  margin : 0px;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* --- NEW: Global Premium Background --- */
+  background-color: #f8fafc; 
+  color: #0f172a; /* Sets a clean default text color for the whole app */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html::-webkit-scrollbar, 
+body::-webkit-scrollbar {
+  display: none;
+}
