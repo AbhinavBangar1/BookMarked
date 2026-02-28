@@ -21,7 +21,7 @@ function Header() {
 
     const handleProfileClick = () => {
         if (user) {
-            setShowDropdown(!showDropdown);
+            navigate(`/profile/${user.id}`);
         } else {
             toAuth();
         }
