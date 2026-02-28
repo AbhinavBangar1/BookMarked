@@ -21,21 +21,16 @@ const ProfilePage = () => {
   const [shelf, setShelf] = useState([]);
   const [shelfFilter, setShelfFilter] = useState("all");
   
-  // State to hold ratings for the books in the reviews tab
   const [bookRatings, setBookRatings] = useState({});
 
   const isOwnProfile = !userid || userid === user?.id;
 
-  // Check if the logged-in user is already in this profile's friends list
   const isAlreadyFriend = friends.some(friend => friend.userid === user?.id);
 
   const availableTabs = isOwnProfile 
     ? ["reviews", "friends", "requests", "shelf"] 
     : ["reviews", "friends", "shelf"];
 
-  /* ============================
-     FETCH PROFILE DATA
-     ============================ */
   useEffect(() => {
     if (loading) return;
 
@@ -63,23 +58,18 @@ const ProfilePage = () => {
     }
   };
 
-  /* ============================
-     FETCH USER RATINGS FOR REVIEWS
-     ============================ */
+
   useEffect(() => {
     const fetchRatingsForReviews = async () => {
       if (!reviews || !reviews.length || !session?.access_token) return;
 
-      // Safely find the book ID, whether it's at the root (review.bookid) or inside the join (review.books.bookid)
       const bookIdsToFetch = [...new Set(
         reviews
           .map(r => r.bookid || r.books?.bookid)
-          .filter(id => id && bookRatings[id] === undefined) // Only fetch ones we haven't fetched yet
+          .filter(id => id && bookRatings[id] === undefined)
       )];
 
       if (bookIdsToFetch.length === 0) return;
-
-      // Fetch concurrently, using functional state updates to prevent overwriting!
       await Promise.all(bookIdsToFetch.map(async (bookId) => {
         try {
           const res = await axios.get(
@@ -87,7 +77,6 @@ const ProfilePage = () => {
             { headers: { Authorization: `Bearer ${session.access_token}` } }
           );
           
-          // Using `prev` ensures concurrent updates don't wipe each other out
           setBookRatings(prev => ({
             ...prev,
             [bookId]: res.data.rating || null
@@ -102,9 +91,7 @@ const ProfilePage = () => {
     fetchRatingsForReviews();
   }, [reviews, session]);
 
-  /* ============================
-     HANDLERS
-     ============================ */
+
   const handleAccept = async (requesterId) => {
     try {
       await axios.put(`https://bookmarked-527h.onrender.com/profile/friends/accept`, {
@@ -156,7 +143,7 @@ const ProfilePage = () => {
     }
   };
 
-  // --- PREMIUM SKELETON LOADER UI ---
+
   if (loading) {
     return (
       <div className="profile-page">
@@ -212,9 +199,6 @@ const ProfilePage = () => {
     );
   }
 
-  /* ============================
-     MAIN RENDER
-     ============================ */
   return (
     <div className="profile-page">
       <Header />
@@ -317,7 +301,6 @@ const ProfilePage = () => {
         {activeTab === "reviews" && (
           <div className="reviews-container">
             {reviews.map((review) => {
-              // Get the ID regardless of backend formatting
               const bId = review.bookid || review.books?.bookid;
               
               return (

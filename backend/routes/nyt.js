@@ -35,17 +35,7 @@ router.get('/:id' , async(req , res)=> {
         const workRes = await axios.get(workUrl);
         const finalData = workRes.data;
 
-        // await storeBookIfNotExists({
-        //     bookid: finalData.key.replace("/works/", ""),
-        //     title: finalData.title,
-        //     description:
-        //         typeof finalData.description === "string"
-        //             ? finalData.description
-        //             : finalData.description?.value ?? null,
-        //     coverimage: finalData.covers?.length
-        //         ? `https://covers.openlibrary.org/b/id/${finalData.covers[0]}-L.jpg`
-        //         : null,
-        // });
+
         await redisClient.setEx(cacheKey,1200,JSON.stringify(finalData));
         res.json(finalData);
 
