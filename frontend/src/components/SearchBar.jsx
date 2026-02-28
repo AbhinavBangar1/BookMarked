@@ -11,8 +11,7 @@ function SearchBar({ isOpen, onClose }) {
   const tabs = [
     { id: "books", label: "Books" },
     { id: "author", label: "Author" },
-    // { id: "clubs", label: "Clubs" },
-    // { id: "users", label: "Users" },
+    { id: "users", label: "Users" },
   ];
 
   const [activeTab, setActiveTab] = useState("books");
@@ -30,12 +29,15 @@ function SearchBar({ isOpen, onClose }) {
     const delayDebounce = setTimeout(async () => {
       try {
         setLoading(true);
-
+        let url = "/api/search/specific";
         let params = {};
         if (activeTab === "books") params.title = query;
         if (activeTab === "author") params.author = query;
-
-        const res = await axios.get("/api/search/specific", { params });
+        if (activeTab === "users") {
+          url = "/api/search/users";
+          params.q = query;
+        }
+        const res = await axios.get(url, { params });
         setResults(res.data || []);
       } catch {
         setResults([]);
@@ -50,12 +52,11 @@ function SearchBar({ isOpen, onClose }) {
   return (
     <div className="search-overlay" onClick={onClose}>
       <div className="search-container" onClick={(e) => e.stopPropagation()}>
-
         <div className="search-top">
           <FiSearch className="search-icon" />
           <input
             type="text"
-            placeholder="Search books, authors, clubs..."
+            placeholder="Search books, authors, users..."
             className="search-input"
             autoFocus
             value={query}
@@ -80,14 +81,12 @@ function SearchBar({ isOpen, onClose }) {
 
         <div className="search-results">
           {loading && <p>Loading...</p>}
-
           {!loading && query && results.length === 0 && (
             <p>No results found for "{query}"</p>
           )}
-
           {results.map((item) => (
             <SearchBarCard
-              key={item.id}
+              key={item.userid || item.bookid || item.id}
               type={activeTab}
               data={item}
               onSelect={onClose}

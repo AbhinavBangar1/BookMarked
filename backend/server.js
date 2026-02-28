@@ -38,7 +38,7 @@ app.use("/api/bookmark", requireAuth, bookmarkRoutes);
 app.use("/api/supabase/rating", ratingRoutes);
 app.use("/api/supabase/reviews", reviewRoutes);
 app.use("/api/author", authorRoutes);
-app.use("/api/reading-status", readingStatusRoutes); 
+app.use("/api/shelf", readingStatusRoutes); 
 app.use("/api/save-book", saveBookRouter);
 
 app.listen(PORT, () => {

@@ -14,16 +14,39 @@ function AuthorPage() {
   useEffect(() => {
     async function fetchData() {
       try {
+        // 1. Fetch Author Details
         const authorRes = await fetch(`http://localhost:5001/api/author/${id}`);
         if (authorRes.ok) {
           const authorData = await authorRes.json();
           setAuthor(authorData);
         }
 
+        // 2. Fetch Author's Books
         const booksRes = await fetch(`http://localhost:5001/api/author/${id}/books`);
         if (booksRes.ok) {
           const booksData = await booksRes.json();
           setBooks(booksData);
+
+          // 3. BACKGROUND TASK: Save new books to the database
+          if (booksData && booksData.length > 0) {
+            const savePromises = booksData.map((book) => {
+              const olId = book.id.replace("/works/", "");
+
+              return fetch("http://localhost:5001/api/save-book", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                // Passes coverImage to the payload so it saves in the DB
+                body: JSON.stringify({ olId, coverImage: book.image }),
+              }).catch((err) =>
+                console.error(`Failed to trigger save for book ${olId}:`, err)
+              );
+            });
+
+            // Run all saves concurrently without blocking the user interface
+            Promise.allSettled(savePromises).then(() => {
+              console.log("Background book sync complete.");
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to fetch author data", error);
@@ -31,6 +54,7 @@ function AuthorPage() {
         setLoading(false);
       }
     }
+    
     fetchData();
   }, [id]);
 

@@ -4,7 +4,7 @@ import { CgProfile } from "react-icons/cg";
 import { IoBookSharp, IoClose } from "react-icons/io5";
 import { useState, useRef, useEffect } from 'react';
 import SearchBar from './SearchBar';
-import { FaBookBookmark } from "react-icons/fa6";
+import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -71,10 +71,11 @@ function Header() {
                     </button>
                 </div>
                 <div className='headerright'>
-                    <FaBookBookmark
-                        className='wishlist-icon'
+                    <BsBookmarkFill
+                        className="wishlist-icon"
                         onClick={handleWishlistClick}
-                        style={{ cursor: 'pointer' }}
+                        aria-label="Wishlist"
+                        role="button"
                     />
                     {isSearchOpen ?
                         <IoClose className='search' onClick={() => setIsSearchOpen(false)} />
