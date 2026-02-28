@@ -470,3 +470,18 @@
     margin-right: 0;
   }
 }
+
+/* Container for the new ReviewCards */
+.reviews-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Keeps the long cards centered in the page */
+  gap: 20px;
+  padding-top: 20px;
+}
+
+.empty-state-wrapper {
+  padding: 80px 0;
+  text-align: center;
+  width: 100%;
+}

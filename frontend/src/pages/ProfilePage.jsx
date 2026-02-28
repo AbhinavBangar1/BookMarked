@@ -262,6 +262,7 @@ import { useAuth } from "../context/AuthContext";
 import { useParams } from "react-router-dom";
 import BookCard from "../components/BookCard";
 import FriendCard from "../components/FriendCard";
+import ReviewCard from "../components/ReviewCard";
 
 const ProfilePage = () => {
   const { user, loading } = useAuth();
@@ -441,23 +442,21 @@ const ProfilePage = () => {
       {/* CONTENT */}
       <div className="profile-content">
         
-        {/* REVIEWS */}
+        {/* REVIEWS SECTION */}
         {activeTab === "reviews" && (
-          <div className="reviews-list">
+          <div className="reviews-container">
             {reviews.map((review) => (
-              <div key={review.reviewid} className="review-card">
-                <img
-                  src={review.books?.coverimage || "/placeholder-book.png"}
-                  alt=""
-                  className="review-book-image"
-                />
-                <div className="review-content">
-                  <div className="review-text">{review.review}</div>
-                  <div className="review-rating">⭐ 4 / 5</div>
-                </div>
-              </div>
+              <ReviewCard 
+                key={review.reviewid} 
+                reviewData={review} 
+              />
             ))}
-            {reviews.length === 0 && <p className="empty-text">No reviews yet.</p>}
+            
+            {reviews.length === 0 && (
+              <div className="empty-state-wrapper">
+                <p className="empty-text">You haven't shared any thoughts yet. Time to start reading! 📚</p>
+              </div>
+            )}
           </div>
         )}
 
