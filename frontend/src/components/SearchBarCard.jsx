@@ -22,7 +22,7 @@ function SearchBarCard({ data, type, onSelect }) {
 
     const fetchAuthorData = async () => {
       try {
-        const res = await axios.get("/api/search/author-image", {
+        const res = await axios.get("https://bookmarked-527h.onrender.com/api/search/author-image", {
           params: { name: authorName },
         });
         if (res.data) {
