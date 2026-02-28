@@ -20,7 +20,7 @@ function Genre() {
 
     setLoading(true);
 
-    fetch(`/api/genre?genre=${genreParam}`)
+    fetch(`https://bookmarked-527h.onrender.com/api/genre?genre=${genreParam}`)
       .then(res => res.json())
       .then(data => {
         setBooks(data || []);

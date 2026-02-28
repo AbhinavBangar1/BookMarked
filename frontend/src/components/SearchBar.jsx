@@ -29,12 +29,12 @@ function SearchBar({ isOpen, onClose }) {
     const delayDebounce = setTimeout(async () => {
       try {
         setLoading(true);
-        let url = "/api/search/specific";
+        let url = "https://bookmarked-527h.onrender.com/api/search/specific";
         let params = {};
         if (activeTab === "books") params.title = query;
         if (activeTab === "author") params.author = query;
         if (activeTab === "users") {
-          url = "/api/search/users";
+          url = "https://bookmarked-527h.onrender.com/api/search/users";
           params.q = query;
         }
         const res = await axios.get(url, { params });

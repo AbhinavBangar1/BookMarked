@@ -67,7 +67,7 @@ function Section({ type, section_title, userBookmarkIds = [] }) {
     setLoading(true);
 
     // Fetching the list of books based on section type (bestseller, popular, etc.)
-    fetch(`/api/section?type=${type}`)
+    fetch(`https://bookmarked-527h.onrender.com/api/section?type=${type}`)
       .then(res => res.json())
       .then(data => {
         setBooks(data.books || []);

@@ -8,7 +8,7 @@ function Quote() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/quote`)
+    fetch(`https://bookmarked-527h.onrender.com/api/quote`)
       .then(res => res.json())
       .then(data => {
         if (data?.quote) {
