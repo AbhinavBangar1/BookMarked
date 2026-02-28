@@ -107,23 +107,23 @@ function BookProfile() {
         let finalData = null;
 
         if (source === "openlibrary") {
-          endpoint = `http://localhost:5001/api/openlibrary/book/${id}`;
+          endpoint = `https://bookmarked-527h.onrender.com/api/openlibrary/book/${id}`;
           isOpenLibrary = true;
         }
         else if (source === "bigbook") {
-          endpoint = `http://localhost:5001/api/bigbook/${id}`;
+          endpoint = `https://bookmarked-527h.onrender.com/api/bigbook/${id}`;
           isOpenLibrary = true;
         }
         else if (source === "nyt" && stateBook) {
           setBook({ data: stateBook, isOpenLibrary: false });
           
           if (id) {
-            fetch("http://localhost:5001/api/nyt/" + id)
+            fetch("https://bookmarked-527h.onrender.com/api/nyt/" + id)
               .then(r => r.json())
               .then(olData => {
                 const olId = olData?.key?.replace("/works/", "");
                 if (olId) {
-                  return fetch("http://localhost:5001/api/save-book", {
+                  return fetch("https://bookmarked-527h.onrender.com/api/save-book", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ olId }),
@@ -139,15 +139,15 @@ function BookProfile() {
           return;
         }
         else if (source === "nyt" && !stateBook) {
-          endpoint = `http://localhost:5001/api/nyt/${id}`;
+          endpoint = `https://bookmarked-527h.onrender.com/api/nyt/${id}`;
           isOpenLibrary = true;
         }
         else {
           if (id.startsWith("OL")) {
-            endpoint = `http://localhost:5001/api/openlibrary/book/${id}`;
+            endpoint = `https://bookmarked-527h.onrender.com/api/openlibrary/book/${id}`;
             isOpenLibrary = true;
           } else {
-            endpoint = `http://localhost:5001/api/book/${id}`;
+            endpoint = `https://bookmarked-527h.onrender.com/api/book/${id}`;
           }
         }
 
@@ -162,7 +162,7 @@ function BookProfile() {
           const olId = finalData?.key?.replace("/works/", "") || (id?.startsWith("OL") ? id : null);
 
           if (olId) {
-            fetch("http://localhost:5001/api/save-book", {
+            fetch("https://bookmarked-527h.onrender.com/api/save-book", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -190,7 +190,7 @@ function BookProfile() {
     async function fetchShelfStatus() {
       try {
         const res = await fetch(
-          `http://localhost:5001/api/shelf/check?bookId=${id}`,
+          `https://bookmarked-527h.onrender.com/api/shelf/check?bookId=${id}`,
           {
             headers: {
               'Authorization': `Bearer ${authToken}`
@@ -276,10 +276,10 @@ function BookProfile() {
 
     async function fetchBookStats() {
       try {
-        const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
+        const ratingRes = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/rating?bookId=${id}`);
         const ratingData = await ratingRes.json();
 
-        const reviewRes = await fetch(`http://localhost:5001/api/supabase/reviews/count?bookId=${id}`);
+        const reviewRes = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/reviews/count?bookId=${id}`);
         const reviewData = await reviewRes.json();
 
         setBookStats({
@@ -300,7 +300,7 @@ function BookProfile() {
 
     async function fetchReviews() {
       try {
-        const res = await fetch(`http://localhost:5001/api/supabase/reviews?bookId=${id}`);
+        const res = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/reviews?bookId=${id}`);
         if (!res.ok) {
           setReviews([]);
           return;
@@ -323,7 +323,7 @@ function BookProfile() {
       try {
         const authorName = info.authors[0];
         const res = await fetch(
-          `http://localhost:5001/api/author?name=${encodeURIComponent(authorName)}`
+          `https://bookmarked-527h.onrender.com/api/author?name=${encodeURIComponent(authorName)}`
         );
         const data = await res.json();
         setAuthorInfo(data);
@@ -363,7 +363,7 @@ function BookProfile() {
               })) || [];
         } else {
           const res = await fetch(
-            `http://localhost:5001/api/search?q=inauthor:${encodeURIComponent(author)}`
+            `https://bookmarked-527h.onrender.com/api/search?q=inauthor:${encodeURIComponent(author)}`
           );
           const data = await res.json();
 
@@ -403,7 +403,7 @@ function BookProfile() {
   const handleStatusChange = (newStatus) => {
     requireLogin(async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/shelf', {
+        const response = await fetch('https://bookmarked-527h.onrender.com/api/shelf', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -429,7 +429,7 @@ function BookProfile() {
   const handleRemoveFromShelf = () => {
     requireLogin(async () => {
       try {
-        const response = await fetch(`http://localhost:5001/api/shelf?bookId=${id}`, {
+        const response = await fetch(`https://bookmarked-527h.onrender.com/api/shelf?bookId=${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${authToken}`
@@ -450,7 +450,7 @@ function BookProfile() {
     requireLogin(async () => {
       try {
         if (rating === 0) {
-          const response = await fetch(`http://localhost:5001/api/supabase/rating?userId=${currentUserId}&bookId=${id}`, {
+          const response = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/rating?userId=${currentUserId}&bookId=${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
@@ -458,7 +458,7 @@ function BookProfile() {
           if (!response.ok) throw new Error('Failed to clear rating');
           setUserRating(0);
         } else {
-          const response = await fetch('http://localhost:5001/api/supabase/rating', {
+          const response = await fetch('https://bookmarked-527h.onrender.com/api/supabase/rating', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -471,7 +471,7 @@ function BookProfile() {
           setUserRating(rating);
         }
 
-        const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
+        const ratingRes = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/rating?bookId=${id}`);
         const ratingData = await ratingRes.json();
         setBookStats(prev => ({
           ...prev,
@@ -490,8 +490,8 @@ function BookProfile() {
     requireLogin(async () => {
       try {
         const url = editingReviewId
-          ? `http://localhost:5001/api/supabase/reviews/${editingReviewId}`
-          : 'http://localhost:5001/api/supabase/reviews';
+          ? `https://bookmarked-527h.onrender.com/api/supabase/reviews/${editingReviewId}`
+          : 'https://bookmarked-527h.onrender.com/api/supabase/reviews';
 
         const method = editingReviewId ? 'PUT' : 'POST';
 
@@ -526,9 +526,9 @@ function BookProfile() {
         setShowReviewForm(false);
         setEditingReviewId(null);
 
-        const reviewRes = await fetch(`http://localhost:5001/api/supabase/reviews/count?bookId=${id}`);
+        const reviewRes = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/reviews/count?bookId=${id}`);
         const reviewData = await reviewRes.json();
-        const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
+        const ratingRes = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/rating?bookId=${id}`);
         const ratingData = await ratingRes.json();
 
         setBookStats(prev => ({
@@ -554,7 +554,7 @@ function BookProfile() {
     if (!window.confirm('Are you sure you want to delete this review?')) return;
 
     try {
-      const res = await fetch(`http://localhost:5001/api/supabase/reviews/${reviewId}`, {
+      const res = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/reviews/${reviewId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
@@ -563,9 +563,9 @@ function BookProfile() {
 
       setReviews(prev => prev.filter(r => r.ReviewId !== reviewId));
 
-      const reviewRes = await fetch(`http://localhost:5001/api/supabase/reviews/count?bookId=${id}`);
+      const reviewRes = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/reviews/count?bookId=${id}`);
       const reviewData = await reviewRes.json();
-      const ratingRes = await fetch(`http://localhost:5001/api/supabase/rating?bookId=${id}`);
+      const ratingRes = await fetch(`https://bookmarked-527h.onrender.com/api/supabase/rating?bookId=${id}`);
       const ratingData = await ratingRes.json();
 
       setBookStats(prev => ({

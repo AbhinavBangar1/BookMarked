@@ -30,8 +30,8 @@ function BookCard({ id, img, title, author, genre, isBookmarked = false, onBookm
       const isDeleting = bookmarked;
       
       const url = isDeleting 
-        ? `http://localhost:5001/api/bookmark?bookId=${id}` 
-        : "http://localhost:5001/api/bookmark";
+        ? `https://bookmarked-527h.onrender.com/api/bookmark?bookId=${id}` 
+        : "https://bookmarked-527h.onrender.com/api/bookmark";
 
       const response = await fetch(url, {
         method: isDeleting ? "DELETE" : "POST",

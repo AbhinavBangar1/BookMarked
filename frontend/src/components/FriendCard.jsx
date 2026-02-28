@@ -23,7 +23,7 @@ const FriendCard = ({
     setIsModalOpen(true);
     setLoadingFriends(true);
     try {
-      const res = await axios.get(`http://localhost:5001/profile/${user.userid}`);
+      const res = await axios.get(`https://bookmarked-527h.onrender.com/profile/${user.userid}`);
       setTargetUserFriends(res.data.friends || []);
     } catch (err) {
       console.error("Failed to fetch friends", err);
@@ -63,7 +63,7 @@ const FriendCard = ({
 
         try {
             // This matches: Base URL + /profile + /friends/request
-            await axios.post(`http://localhost:5001/profile/friends/request`, {
+            await axios.post(`https://bookmarked-527h.onrender.com/profile/friends/request`, {
                 userId: currentUserId,
                 friendId: targetUserId
             });
