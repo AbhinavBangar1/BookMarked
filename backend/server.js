@@ -19,7 +19,6 @@ import saveBookRouter from "./routes/saveBook.js";
 import profileRoutes from "./routes/profile.js";
 
 const app = express();
-const PORT = 5001;
 
 app.use(cors());
 app.use(express.json());
@@ -41,6 +40,7 @@ app.use("/api/author", authorRoutes);
 app.use("/api/shelf", readingStatusRoutes); 
 app.use("/api/save-book", saveBookRouter);
 
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`server running on http://localhost:${PORT}`);
 });
