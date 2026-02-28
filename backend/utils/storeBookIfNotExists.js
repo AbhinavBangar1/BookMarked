@@ -8,7 +8,6 @@ const supabase = createClient(
 export async function storeBookIfNotExists(book) {
   if (!book?.bookid) return;
 
-  // Proper existence check
   const { data, error } = await supabase
     .from("books")
     .select("bookid")
@@ -19,10 +18,8 @@ export async function storeBookIfNotExists(book) {
     return;
   }
 
-  // If already exists → skip
   if (data.length > 0) return;
 
-  // Insert
   const { error: insertError } = await supabase
     .from("books")
     .insert([book]);
