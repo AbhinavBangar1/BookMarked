@@ -8,6 +8,73 @@ const supabase = createClient(
   process.env.SUPABASE_KEY 
 );
 
+
+
+// ==========================================
+// FRIEND REQUEST ROUTES
+// ==========================================
+
+// 1. SEND A FRIEND REQUEST
+router.post("/friends/request", async (req, res) => {
+  try {
+    const { userId, friendId } = req.body;
+
+    if (!userId || !friendId) {
+      return res.status(400).json({ error: "Missing user or friend ID" });
+    }
+
+    const { data, error } = await supabase
+      .from("friends")
+      .insert([{ user_id: userId, friend_id: friendId, status: "pending" }]);
+
+    if (error) throw error;
+    res.status(200).json({ message: "Friend request sent successfully!" });
+  } catch (err) {
+    console.error("Error sending friend request:", err);
+    res.status(500).json({ error: "Failed to send request" });
+  }
+});
+
+// 2. ACCEPT A FRIEND REQUEST
+router.put("/friends/accept", async (req, res) => {
+  try {
+    const { userId, friendId } = req.body;
+
+    // We update the row where the friend (requester) sent a request to the user (receiver)
+    const { data, error } = await supabase
+      .from("friends")
+      .update({ status: "accepted" })
+      .eq("user_id", friendId)
+      .eq("friend_id", userId);
+
+    if (error) throw error;
+    res.status(200).json({ message: "Friend request accepted!" });
+  } catch (err) {
+    console.error("Error accepting friend request:", err);
+    res.status(500).json({ error: "Failed to accept request" });
+  }
+});
+
+// 3. REJECT/DELETE A FRIEND REQUEST
+router.delete("/friends/reject", async (req, res) => {
+  try {
+    const { userId, friendId } = req.body;
+
+    const { data, error } = await supabase
+      .from("friends")
+      .delete()
+      .eq("user_id", friendId)
+      .eq("friend_id", userId);
+
+    if (error) throw error;
+    res.status(200).json({ message: "Friend request rejected." });
+  } catch (err) {
+    console.error("Error rejecting friend request:", err);
+    res.status(500).json({ error: "Failed to reject request" });
+  }
+});
+
+
 router.get("/:userid", async (req, res) => {
   try {
     const { userid } = req.params;
@@ -113,5 +180,6 @@ router.get("/:userid", async (req, res) => {
     res.status(500).json({ error: "Failed to load profile" });
   }
 });
+
 
 export default router;

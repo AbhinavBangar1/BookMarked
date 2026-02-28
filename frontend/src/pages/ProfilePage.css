@@ -32,7 +32,7 @@
 }
 
 /* =========================================
-   PROFILE HERO (Matches Wireframe Layout)
+   PROFILE HERO (Split Layout)
    ========================================= */
 .profile-hero {
   max-width: 1200px;
@@ -42,189 +42,235 @@
 
 .profile-card {
   background: var(--bg-surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  padding: 48px;
+  padding: 48px 64px; /* Slightly wider padding for a more premium feel */
   display: flex;
-  gap: 48px;
-  align-items: flex-start;
-  box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  gap: 40px; 
+  align-items: center; 
+  box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
   transition: var(--transition-standard);
 }
 
 .profile-card:hover {
   box-shadow: var(--shadow-hover), inset 0 0 30px rgba(255, 255, 255, 0.6);
-  border-color: rgba(13, 148, 136, 0.1);
+  border-color: rgba(13, 148, 136, 0.2);
 }
 
 /* =========================================
-   AVATAR (Left Circle)
+   LEFT PORTION (Massive Avatar)
    ========================================= */
 .avatar-wrapper {
   flex-shrink: 0;
 }
 
 .profile-avatar {
-  width: 160px;
-  height: 160px;
-  background-color: var(--teal-light);
-  border-radius: 50%;
+  width: 240px; /* Massive size to cover left portion */
+  height: 240px;
+  background: linear-gradient(135deg, var(--teal-light) 0%, #ccfbf1 100%);
+  border-radius: 32px; /* Soft, modern square instead of a circle */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 4rem;
-  font-weight: 500;
+  font-size: 6rem; /* Huge typography for the letter */
+  font-weight: 700;
   color: var(--teal-primary);
-  border: 1px solid var(--border-glass);
-  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.8);
+  border: 2px solid var(--border-glass);
+  box-shadow: 0 20px 40px -10px rgba(13, 148, 136, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.9);
+  text-shadow: 0 4px 10px rgba(13, 148, 136, 0.1);
 }
 
 /* =========================================
-   INFO SECTION (Right Side)
+   RIGHT PORTION (Info, Stats, Actions)
    ========================================= */
 .profile-info {
-  flex-grow: 1;
+  /* Removed flex-grow: 1 so it stops stretching across the middle */
+  margin-left: auto; /* This strictly pushes the entire block to the right */
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
-.profile-info h2 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  margin: 0 0 4px 0;
-  letter-spacing: -0.5px;
+.profile-identity {
+  margin-bottom: 32px;
+}
+
+.profile-identity h2 {
+  font-size: 3rem; /* Huge, prominent name */
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  letter-spacing: -1px;
   color: var(--text-dark);
+  line-height: 1.1;
 }
 
-.profile-info .email {
+.profile-identity .email {
   color: var(--text-muted);
-  font-size: 1.1rem;
-  margin: 0 0 24px 0;
+  font-size: 1.25rem;
+  margin: 0;
+  font-weight: 500;
 }
 
-.profile-actions {
+/* Stats Grouping */
+.profile-stats {
   display: flex;
   gap: 16px;
   margin-bottom: 32px;
 }
 
-/* Refined, elegant buttons */
-.primary-btn, .secondary-btn {
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition-standard);
-  border: 1px solid transparent;
-}
-
-.primary-btn {
-  background-color: var(--teal-primary);
-  color: white;
-  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2);
-}
-
-.primary-btn:hover {
-  background-color: var(--teal-hover);
-  transform: translateY(-1px);
-}
-
-.secondary-btn {
-  background: var(--bg-surface);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: var(--text-dark);
-  border-color: var(--border-light);
-}
-
-.secondary-btn:hover {
-  background-color: var(--bg-subtle);
-  border-color: #cbd5e1;
-  transform: translateY(-1px);
-}
-
-/* Stats (Bottom Right Rectangle) */
-.profile-stats {
+.stat-box {
   background-color: var(--bg-subtle);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: var(--radius-md);
-  padding: 24px 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid var(--border-glass);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
-}
-
-.profile-stats div {
+  padding: 20px 32px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start; /* Align text to the left inside the box */
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  min-width: 120px;
+  transition: transform 0.3s ease;
 }
 
-.profile-stats strong {
-  font-size: 1.5rem;
+.stat-box:hover {
+  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-box strong {
+  font-size: 1.75rem;
   color: var(--text-dark);
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 6px;
 }
 
-.profile-stats span {
+.stat-box span {
   font-size: 0.85rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 4px;
-  font-weight: 500;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
-/* =========================================
-   TABS NAVIGATION
+/* Actions */
+.profile-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.add-friend-btn {
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-standard);
+  border: 1px solid transparent;
+  background-color: var(--teal-primary);
+  color: white;
+  box-shadow: 0 8px 20px -6px rgba(13, 148, 136, 0.4);
+}
+
+.add-friend-btn:hover {
+  background-color: var(--teal-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -6px rgba(13, 148, 136, 0.5);
+}
+
+/* RESPONSIVE HERO */
+@media (max-width: 768px) {
+  .profile-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 32px;
+    padding: 32px 20px;
+  }
+  
+  .profile-avatar {
+    width: 180px;
+    height: 180px;
+    font-size: 4rem;
+    border-radius: 50%; /* Revert to circle on small screens to save space */
+  }
+
+  .profile-identity h2 {
+    font-size: 2.25rem;
+  }
+  
+  .profile-stats {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .stat-box {
+    align-items: center; /* Re-center text on mobile */
+    min-width: calc(50% - 8px);
+    padding: 16px;
+  }
+  
+  .profile-actions {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .add-friend-btn {
+    width: 100%;
+  }
+}/* =========================================
+   TABS NAVIGATION (Centered & Prominent)
    ========================================= */
 .profile-tabs {
-  max-width: 1200px;
-  margin: 0 auto 32px auto;
+  max-width: 700px; /* Constrain width to keep it centered tightly */
+  margin: 0 auto 48px auto;
   display: flex;
-  gap: 32px;
-  padding: 0 24px;
-  border-bottom: 1px solid var(--border-light);
+  justify-content: center; /* Centers the items */
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-surface); /* Glass background for the bar */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 100px; /* Full pill shape */
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
 }
 
 .profile-tabs button {
+  flex: 1; /* Makes all tabs equal width */
   background: transparent;
   border: none;
-  padding: 12px 0;
-  font-size: 1rem;
-  font-weight: 500;
+  padding: 14px 24px;
+  font-size: 1.1rem; /* Larger, more prominent text */
+  font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
-  transition: var(--transition-standard);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 100px; /* Inner pill shape for hover/active */
   position: relative;
+  text-align: center;
 }
 
 .profile-tabs button:hover {
   color: var(--text-dark);
+  background: rgba(255, 255, 255, 0.4);
 }
 
+/* Active State: Looks like a raised solid button */
 .profile-tabs button.active {
   color: var(--teal-primary);
+  background: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+  transform: translateY(-1px);
 }
 
+/* Remove the old underline */
 .profile-tabs button.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--teal-primary);
+  display: none;
 }
-
 /* =========================================
    CONTENT AREA 
    ========================================= */
