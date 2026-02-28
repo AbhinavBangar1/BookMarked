@@ -2,12 +2,13 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./ReviewCard.css";
 
-const ReviewCard = ({ reviewData }) => {
+const ReviewCard = ({ reviewData, userRating }) => {
   const navigate = useNavigate();
 
   if (!reviewData || !reviewData.books) return null;
 
-  const { review, books, createdat, rating } = reviewData;
+  const { review, books, createdat } = reviewData;
+  const bookId = reviewData.bookid || books.bookid; // Secure fallback
   
   const dateFormatted = createdat 
     ? new Date(createdat).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) 
@@ -16,7 +17,7 @@ const ReviewCard = ({ reviewData }) => {
   return (
     <div className="aesthetic-card">
       {/* FLOATING BOOK COVER */}
-      <div className="cover-anchor" onClick={() => navigate(`/book/${books.bookid}`)}>
+      <div className="cover-anchor" onClick={() => navigate(`/book/${bookId}`)}>
         <img 
           src={books.coverimage || "https://placehold.co/300x450?text=No+Cover"} 
           alt={books.title} 
@@ -34,9 +35,11 @@ const ReviewCard = ({ reviewData }) => {
             <h4 className="title-text">{books.title}</h4>
             <span className="date-text">{dateFormatted}</span>
           </div>
+          
+          {/* DYNAMIC RATING TAG */}
           <div className="rating-tag">
-            <span className="star-mini">★</span>
-            <span className="score-text">{rating || "4.8"}</span>
+            <span className="star-mini" style={{ color: userRating ? 'inherit' : '#ccc' }}>★</span>
+            <span className="score-text">{userRating ? `${userRating}/5` : "No rating"}</span>
           </div>
         </div>
 

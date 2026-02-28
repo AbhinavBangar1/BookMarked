@@ -9,12 +9,6 @@ const supabase = createClient(
 );
 
 
-
-// ==========================================
-// FRIEND REQUEST ROUTES
-// ==========================================
-
-// 1. SEND A FRIEND REQUEST
 router.post("/friends/request", async (req, res) => {
   try {
     const { userId, friendId } = req.body;
@@ -23,11 +17,18 @@ router.post("/friends/request", async (req, res) => {
       return res.status(400).json({ error: "Missing user or friend ID" });
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("friends")
       .insert([{ user_id: userId, friend_id: friendId, status: "pending" }]);
 
-    if (error) throw error;
+    if (error) {
+
+      if (error.code === '23505') {
+        return res.status(400).json({ error: "Friend request already sent." });
+      }
+      throw error;
+    }
+    
     res.status(200).json({ message: "Friend request sent successfully!" });
   } catch (err) {
     console.error("Error sending friend request:", err);
@@ -35,13 +36,15 @@ router.post("/friends/request", async (req, res) => {
   }
 });
 
-// 2. ACCEPT A FRIEND REQUEST
 router.put("/friends/accept", async (req, res) => {
   try {
     const { userId, friendId } = req.body;
 
-    // We update the row where the friend (requester) sent a request to the user (receiver)
-    const { data, error } = await supabase
+    if (!userId || !friendId) {
+      return res.status(400).json({ error: "Missing user or friend ID" });
+    }
+
+    const { error } = await supabase
       .from("friends")
       .update({ status: "accepted" })
       .eq("user_id", friendId)
@@ -55,12 +58,16 @@ router.put("/friends/accept", async (req, res) => {
   }
 });
 
-// 3. REJECT/DELETE A FRIEND REQUEST
+
 router.delete("/friends/reject", async (req, res) => {
   try {
     const { userId, friendId } = req.body;
 
-    const { data, error } = await supabase
+    if (!userId || !friendId) {
+      return res.status(400).json({ error: "Missing user or friend ID" });
+    }
+
+    const { error } = await supabase
       .from("friends")
       .delete()
       .eq("user_id", friendId)
@@ -75,6 +82,7 @@ router.delete("/friends/reject", async (req, res) => {
 });
 
 
+
 router.get("/:userid", async (req, res) => {
   try {
     const { userid } = req.params;
@@ -83,25 +91,25 @@ router.get("/:userid", async (req, res) => {
       return res.status(400).json({ error: "No user id provided" });
     }
 
-    // USER
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("userid, username, email, created_at")
       .eq("userid", userid)
       .maybeSingle();
 
-    if (!user) {
+    if (userError || !user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // REVIEWS
-    const { data: reviews, error: reviewError } = await supabase
+
+    const { data: reviewsRaw, error: reviewError } = await supabase
       .from("reviews")
       .select(`
         reviewid,
         review,
         createdat,
         books:bookid (
+          bookid,
           title,
           coverimage
         )
@@ -110,10 +118,9 @@ router.get("/:userid", async (req, res) => {
       .order("createdat", { ascending: false, nullsFirst: false });
 
     if (reviewError) {
-      return res.status(500).json({ error: "Failed to fetch reviews" });
+      console.error("Reviews error:", reviewError);
     }
 
-    //FRIENDS (accepted only, return OTHER user)
     const { data: friendsRaw, error: friendsError } = await supabase
       .from("friends")
       .select(`
@@ -127,14 +134,12 @@ router.get("/:userid", async (req, res) => {
       .eq("status", "accepted");
 
     if (friendsError) {
-      return res.status(500).json({ error: "Failed to fetch friends" });
+      console.error("Friends error:", friendsError);
     }
 
-    const friends = friendsRaw.map((row) => {
-      return row.user.userid === userid ? row.friend : row.user;
+    const friends = (friendsRaw || []).map((row) => {
+      return row.user_id === userid ? row.friend : row.user;
     });
-
-    //FRIEND REQUESTS (PENDING, NOT "requested")
     const { data: requestsRaw, error: requestError } = await supabase
       .from("friends")
       .select(`
@@ -144,12 +149,17 @@ router.get("/:userid", async (req, res) => {
       .eq("friend_id", userid)
       .eq("status", "pending");
 
+    if (requestError) {
+      console.error("Requests error:", requestError);
+    }
 
-    const { data: shelf, error: shelfError } = await supabase
+    const requests = (requestsRaw || []).map((r) => r.user);
+
+    const { data: shelfRaw, error: shelfError } = await supabase
       .from("shelf")
       .select(`
         status,
-        books:bookid (
+        books (
           bookid,
           title,
           coverimage
@@ -159,27 +169,19 @@ router.get("/:userid", async (req, res) => {
 
     if (shelfError) {
       console.error("Shelf error:", shelfError);
-      return res.status(500).json({ error: "Failed to fetch shelf" });
-}
-
-    if (requestError) {
-      return res.status(500).json({ error: "Failed to fetch requests" });
     }
-
-    const requests = requestsRaw.map((r) => r.user);
-
     res.json({
       user,
-      reviews: reviews || [],
+      reviews: reviewsRaw || [],
       friends,
       requests,
-      shelf,
+      shelf: shelfRaw || [],
     });
+
   } catch (err) {
-    console.error(err);
+    console.error("Profile Fetch Error:", err);
     res.status(500).json({ error: "Failed to load profile" });
   }
 });
-
 
 export default router;

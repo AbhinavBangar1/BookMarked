@@ -1,37 +1,51 @@
 import express from "express";
 import axios from "axios";
 import redisClient from "../redisClient.js";
+import { createClient } from "@supabase/supabase-js";
 
 const router = express.Router();
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
 
 // for search bar
 router.get("/specific", async (req, res) => {
   try {
     const { author, title, isbn, publisher } = req.query;
 
-    let query = "";
-
-    if (author) query = `inauthor:${author}`;
-    else if (title) query = `intitle:${title}`;
-    else if (isbn) query = `isbn:${isbn}`;
-    else if (publisher) query = `inpublisher:${publisher}`;
-
-    if (!query) {
-      return res.status(400).json({ error: "No search query provided" });
+    if (!author && !title && !isbn && !publisher) {
+      return res.status(400).json({ error: "No search parameters provided" });
     }
 
-    const URL = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
-      query
-    )}&maxResults=30&key=${process.env.GOOGLE_BOOKS_API_KEY}`;
+    const selectString = author ? '*, author!inner(name)' : '*, author(name)';
+    
+    let query = supabase.from("books").select(selectString);
 
-    console.log("Google Books URL:", URL);
+    if (title) {
+      query = query.ilike("title", `%${title}%`);
+    }
+    if (author) {
+      query = query.ilike("author.name", `%${author}%`);
+    }
+    if (publisher) {
+      query = query.ilike("publisher", `%${publisher}%`);
+    }
+    if (isbn) {
+      query = query.eq("isbn", isbn);
+    }
+    const { data, error } = await query.limit(5);
 
-    const response = await axios.get(URL);
+    if (error) {
+      console.error("Database search error:", error);
+      return res.status(500).json({ error: "Failed to fetch books from database" });
+    }
 
-    res.json(response.data.items?.slice(0, 5) || []);
+    res.json(data || []);
   } catch (error) {
-    console.error("Specific search error:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch books" });
+    console.error("Specific search error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -78,6 +92,34 @@ router.get("/author-image", async (req, res) => {
   } catch (error) {
     console.error("Author image error:", error.message);
     res.status(500).json({ error: "Failed to fetch author image" });
+  }
+});
+
+
+// Search users by username or email
+router.get("/users", async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || !q.trim()) return res.status(400).json({ error: "Query required" });
+
+    const searchQuery = q.trim().toLowerCase();
+
+    // Supabase query
+    const { data, error } = await supabase
+      .from("users")
+      .select("userid, username, email, created_at")
+      .ilike("username", `%${searchQuery}%`)
+      .or(`email.ilike.%${searchQuery}%`)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (err) {
+    console.error("Supabase user search error:", err.message);
+    res.status(500).json({ error: "Failed to search users" });
   }
 });
 
