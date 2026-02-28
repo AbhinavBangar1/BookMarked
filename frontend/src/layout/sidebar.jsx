@@ -1,35 +1,28 @@
-import { useNavigate } from "react-router-dom";
-import '../Profile.css';
-
-export default function Sidebar({ user }) {
-
-  const navigate = useNavigate();
+export default function Sidebar({ user, toggleDark }) {
 
   return (
     <div className="sidebar">
 
-      <div className="sidebar-header">
-        <h2>{user?.email || "User"}</h2>
+      {/* Profile section */}
+      <div style={{ marginBottom: "30px" }}>
+        <h2>{user?.username || "User"}</h2>
+        <p style={{ opacity: 0.8 }}>{user?.email}</p>
       </div>
 
-      <div className="sidebar-menu">
-        <button onClick={() => navigate("/")}>
-          Dashboard
-        </button>
+      <hr />
 
-        <button onClick={() => navigate("/wishlist")}>
-          My Books
-        </button>
+      {/* Navigation */}
+      <div style={{ marginTop: "20px" }}>
+        <p className="nav-item">Dashboard</p>
+        <p className="nav-item">My Books</p>
+        <p className="nav-item">Reviews</p>
+        <p className="nav-item">Settings</p>
+      </div>
 
-        <button onClick={() => navigate("/dashboard")}>
-          Reviews
-        </button>
-
-        <button onClick={() => navigate("/settings")}>
-          Settings
-        </button>
-        <button onClick={() => navigate("/Friends")}>
-          Friends
+      {/* Dark mode toggle */}
+      <div style={{ marginTop: "40px" }}>
+        <button onClick={toggleDark} className="dark-toggle">
+          🌙 Toggle Dark Mode
         </button>
       </div>
 

@@ -18,7 +18,6 @@ function Header() {
     const toHome = () => navigate(`/`);
     const toAuth = () => navigate('/auth');
     const toWishlist = () => navigate('/wishlist');
-    const toDashboard = () => navigate('/dashboard'); 
 
     const handleProfileClick = () => {
         if (user) {
@@ -102,15 +101,6 @@ function Header() {
                                     <div className='dropdown-username'>{profile.username}</div>
                                 )}
                                 <div className='dropdown-email'>{user.email}</div>
-                                  <button
-                                    className='dropdown-profile'
-                                    onClick={() => {
-                                        setShowDropdown(false);
-                                        toDashboard();
-                                    }}
-                                >
-                                    View Profile
-                                </button>
                                 <button
                                     className='dropdown-logout'
                                     onClick={handleLogout}
