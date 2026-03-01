@@ -67,7 +67,7 @@ function Header() {
                 <div className='headerleft'>
                     <IoBookSharp className='booksicon' />
                     <button className='sitename' onClick={() => toHome()}>
-                        Marked
+                        BookMarked
                     </button>
                 </div>
                 <div className='headerright'>
