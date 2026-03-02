@@ -1,3 +1,14 @@
+import express from "express";
+import fetch from "node-fetch";
+import { createClient } from "@supabase/supabase-js";
+
+const router = express.Router();
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
 router.post("/", async (req, res) => {
   try {
     const { olId, coverImage, isbn } = req.body;
@@ -156,3 +167,5 @@ router.post("/", async (req, res) => {
     });
   }
 });
+
+export default router;
