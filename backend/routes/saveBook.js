@@ -1,119 +1,124 @@
-import express from "express";
-import fetch from "node-fetch";
-import { createClient } from "@supabase/supabase-js";
-
-const router = express.Router();
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
-
-/**
- * POST /api/save-book
- * Body: { olId: "OL12345W", coverImage?: string, isbn?: string }
- */
 router.post("/", async (req, res) => {
   try {
     const { olId, coverImage, isbn } = req.body;
-
-    console.log("=== save-book called, olId:", olId);
 
     if (!olId) {
       return res.status(400).json({ error: "olId is required" });
     }
 
-    // ── 1. Early-exit if book already exists ──────────────────────────────────
-    const { data: existing, error: existErr } = await supabase
+    const { data: existingBook } = await supabase
       .from("books")
       .select("bookid")
       .eq("bookid", olId)
       .maybeSingle();
 
-    if (existing) {
-      return res.json({ bookid: existing.bookid, cached: true });
+    if (existingBook) {
+      return res.json({ bookid: existingBook.bookid, cached: true });
     }
 
-    // ── 2. Fetch from OpenLibrary ─────────────────────────────────────────────
     let workId = olId;
 
     if (!olId.endsWith("W")) {
       const edRes = await fetch(`https://openlibrary.org/books/${olId}.json`);
       if (!edRes.ok) return res.status(404).json({ error: "Edition not found" });
+
       const edData = await edRes.json();
       if (!edData.works?.length)
         return res.status(404).json({ error: "No work linked to edition" });
+
       workId = edData.works[0].key.replace("/works/", "");
     }
 
     const workRes = await fetch(`https://openlibrary.org/works/${workId}.json`);
-    if (!workRes.ok) return res.status(404).json({ error: "Work not found" });
+    if (!workRes.ok)
+      return res.status(404).json({ error: "Work not found" });
+
     const work = await workRes.json();
 
-    console.log("work fetched:", work.title);
 
-    // ── 3. Resolve first author ───────────────────────────────────────────────
-    let authorName = null;
-    if (work.authors?.length) {
-      const authorKey = work.authors[0].author?.key;
-      if (authorKey) {
-        const aRes = await fetch(`https://openlibrary.org${authorKey}.json`);
-        if (aRes.ok) {
-          const aData = await aRes.json();
-          authorName = aData.name ?? null;
-        }
-      }
+    if (!work.authors?.length) {
+      return res.status(400).json({ error: "Book has no authors in OpenLibrary" });
     }
 
-    let authorid = null;
-    if (authorName) {
-      const { data: existingAuthor } = await supabase
-        .from("author")
-        .select("authorid")
-        .eq("name", authorName)
-        .maybeSingle();
-
-      if (existingAuthor) {
-        authorid = existingAuthor.authorid;
-      } else {
-        const { data: newAuthor, error: authorErr } = await supabase
-          .from("author")
-          .insert({ name: authorName })
-          .select("authorid")
-          .single();
-        authorid = newAuthor?.authorid ?? null;
-      }
+    const authorKey = work.authors[0].author?.key;
+    if (!authorKey) {
+      return res.status(400).json({ error: "Invalid author key" });
     }
 
-    // ── 4. Resolve genre ──────────────────────────────────────────────────────
-    const rawSubject = work.subjects?.[0] ?? null;
-    const genreName = rawSubject
-      ? rawSubject.slice(0, 60).replace(/\b\w/g, (c) => c.toUpperCase())
-      : "Uncategorized";
+    const authorId = authorKey.replace("/authors/", "");
 
-    let genreid = null;
-    const { data: existingGenre } = await supabase
-      .from("genre")
-      .select("genreid")
-      .eq("genrename", genreName)
+    let { data: existingAuthor } = await supabase
+      .from("author")
+      .select("authorid")
+      .eq("authorid", authorId)
       .maybeSingle();
 
-    if (existingGenre) {
-      genreid = existingGenre.genreid;
-    } else {
-      const { data: newGenre, error: genreErr } = await supabase
-        .from("genre")
-        .insert({ genrename: genreName })
-        .select("genreid")
-        .single();
-      genreid = newGenre?.genreid ?? null;
+    if (!existingAuthor) {
+      const aRes = await fetch(`https://openlibrary.org${authorKey}.json`);
+      if (!aRes.ok)
+        return res.status(400).json({ error: "Failed to fetch author data" });
+
+      const aData = await aRes.json();
+
+      const { error: authorInsertError } = await supabase
+        .from("author")
+        .insert({
+          authorid: authorId,
+          name: aData.name ?? "Unknown Author",
+        });
+
+      if (authorInsertError) {
+        return res.status(500).json({
+          error: "Failed to insert author",
+          detail: authorInsertError.message,
+        });
+      }
     }
 
-    // ── 5. Insert book ────────────────────────────────────────────────────────
-    const title = typeof work.title === "string" ? work.title : "Unknown Title";
-    const description = typeof work.description === "string"
-      ? work.description
-      : work.description?.value ?? null;
+
+    const rawSubject = work.subjects?.[0];
+
+    if (!rawSubject) {
+      return res.status(400).json({ error: "Book has no subjects (genre)" });
+    }
+
+    const genreName = rawSubject
+      .slice(0, 60)
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+    const genreId = genreName.toLowerCase().replace(/\s+/g, "_");
+
+    let { data: existingGenre } = await supabase
+      .from("genre")
+      .select("genreid")
+      .eq("genreid", genreId)
+      .maybeSingle();
+
+    if (!existingGenre) {
+      const { error: genreInsertError } = await supabase
+        .from("genre")
+        .insert({
+          genreid: genreId,
+          genrename: genreName,
+        });
+
+      if (genreInsertError) {
+        return res.status(500).json({
+          error: "Failed to insert genre",
+          detail: genreInsertError.message,
+        });
+      }
+    }
+
+
+    const title =
+      typeof work.title === "string" ? work.title : "Unknown Title";
+
+    const description =
+      typeof work.description === "string"
+        ? work.description
+        : work.description?.value ?? null;
+
     const publishedYear = work.first_publish_date
       ? parseInt(work.first_publish_date.slice(-4), 10) || null
       : null;
@@ -127,24 +132,27 @@ router.post("/", async (req, res) => {
         isbn: isbn ?? null,
         publisher: null,
         publishedyear: publishedYear,
-        genreid,
-        authorid,
-        coverimage: coverImage ?? null, // <--- FIXED: Now safely saves the cover image!
+        genreid: genreId,
+        authorid: authorId,
+        coverimage: coverImage ?? null,
       })
       .select("bookid")
       .single();
 
     if (bookErr) {
-      console.error("Book insert error:", bookErr);
-      return res.status(500).json({ error: "Failed to save book", detail: bookErr.message });
+      return res.status(500).json({
+        error: "Failed to save book",
+        detail: bookErr.message,
+      });
     }
 
     return res.json({ bookid: bookRow.bookid, cached: false });
 
   } catch (err) {
     console.error("saveBook error:", err);
-    res.status(500).json({ error: "Internal server error", detail: err.message });
+    return res.status(500).json({
+      error: "Internal server error",
+      detail: err.message,
+    });
   }
 });
-
-export default router;
