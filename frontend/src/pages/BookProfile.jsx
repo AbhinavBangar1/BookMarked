@@ -108,6 +108,37 @@ function BookProfile() {
   };
 
   useEffect(() => {
+    if (!isLoggedIn || !id || !authToken) return;
+
+    async function fetchMyRating() {
+      try {
+        const res = await fetch(
+          `https://bookmarked-527h.onrender.com/api/supabase/rating/my?bookId=${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`
+            }
+          }
+        );
+
+        if (!res.ok) {
+          setUserRating(0);
+          return;
+        }
+
+        const data = await res.json();
+
+        setUserRating(data.rating || 0);
+
+      } catch (err) {
+        console.error("Failed to fetch user rating", err);
+      }
+    }
+
+    fetchMyRating();
+  }, [isLoggedIn, id, authToken]);
+
+  useEffect(() => {
     async function fetchBookFromDB() {
       try {
         setLoading(true);
@@ -349,7 +380,7 @@ function BookProfile() {
     });
   };
 
-  const handleReviewSubmit = async (e) => {
+    const handleReviewSubmit = async (e) => {
     e.preventDefault();
 
     requireLogin(async () => {
@@ -373,25 +404,40 @@ function BookProfile() {
 
         const data = await res.json();
 
-        // Replace existing review by this user
+        if (reviewRating > 0) {
+          const ratingRes = await fetch(
+            "https://bookmarked-527h.onrender.com/api/supabase/rating",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${authToken}`
+              },
+              body: JSON.stringify({
+                bookId: id,
+                rating: reviewRating
+              })
+            }
+          );
+
+          if (!ratingRes.ok) throw new Error("Failed to save rating");
+        }
+
+        // Update local rating UI
+        setUserRating(reviewRating);
+
+        // Update reviews state
         setReviews(prev => {
           const filtered = prev.filter(r => r.UserId !== currentUserId);
           return [data, ...filtered];
         });
 
         setNewReview("");
+        setReviewRating(0);
         setShowReviewForm(false);
-        setIsEditing(false); // 🔥 reset edit mode
+        setIsEditing(false);
 
-        const reviewRes = await fetch(
-          `https://bookmarked-527h.onrender.com/api/supabase/reviews/count?bookId=${id}`
-        );
-        const reviewData = await reviewRes.json();
-
-        setBookStats(prev => ({
-          ...prev,
-          totalReviews: reviewData.count
-        }));
+        toast.success("Review submitted!");
 
       } catch (err) {
         toast.error("Failed to submit review: " + err.message);
@@ -674,7 +720,7 @@ function BookProfile() {
         </div>
 
         {/* ABOUT THE AUTHOR */}
-        {book?.author && (
+        {/* {book?.author && (
           <div className="author-section">
             <h3 className="section-title">About the Author</h3>
 
@@ -686,7 +732,7 @@ function BookProfile() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* MORE FROM AUTHOR */}
         <div className="more-books">
@@ -812,7 +858,7 @@ function BookProfile() {
                         </button>
                         <button
                           className="review-action-btn delete"
-                          onClick={() => handleDeleteReview}
+                          onClick={handleDeleteReview}
                         >
                           Delete
                         </button>
