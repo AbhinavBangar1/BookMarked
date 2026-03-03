@@ -94,11 +94,11 @@ function AuthorPage() {
             <div className="books-grid">
               {books.map(book => (
                 <BookCard
-                  key={book.id}
-                  id={book.id}
-                  img={book.image}
+                  key={book.bookid}
+                  id={book.bookid}
+                  img={book.coverimage}
                   title={book.title}
-                  genre={book.genre}
+                  genre={book.genre?.genrename}
                 />
               ))}
             </div>
