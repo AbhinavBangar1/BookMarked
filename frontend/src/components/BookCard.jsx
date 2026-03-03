@@ -60,7 +60,7 @@ function BookCard({ id, img, title, author, genre, isBookmarked = false, onBookm
   };
 
   return (
-    <Link to={`/book/${id}`} className="book-card-link">
+    <Link to={`/books/${id}`} className="book-card-link">
       <div className="book-card">
         <div className="cover-wrapper">
           <img 

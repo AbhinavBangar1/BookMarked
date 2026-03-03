@@ -28,7 +28,7 @@ app.use("/api/genre", genreRoutes);
 // app.use("/api/book", bookRoutes);
 app.use("/profile", profileRoutes);
 app.use("/api/bookmark", requireAuth, bookmarkRoutes);
-app.use("/api/book", bookProfileRoutes);
+app.use("/api/books", bookProfileRoutes);
 app.use("/api/supabase/rating", ratingRoutes);
 app.use("/api/supabase/reviews", reviewRoutes);
 app.use("/api/author", booksRoutes);
