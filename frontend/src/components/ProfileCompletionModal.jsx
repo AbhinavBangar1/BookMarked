@@ -39,7 +39,7 @@ function ProfileCompletionModal() {
             <div className="profile-modal">
                 <div className="auth-logo">
                     <IoBookSharp className="auth-logo-icon" />
-                    <span className="auth-logo-text">ZReads</span>
+                    <span className="auth-logo-text">BookMarked</span>
                 </div>
                 <h2 className="auth-title">Complete Your Profile</h2>
                 <p className="auth-subtitle">Choose a username to get started</p>

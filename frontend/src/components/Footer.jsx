@@ -5,7 +5,7 @@ function Footer(){
     return(
         <>
             <div className='footer-box'>
-                <h2 className='footer-text'>ZReads</h2>
+                <h2 className='footer-text'>BookMarked</h2>
                 <h3 className='footer-text'>Discover. Read. Review.</h3>
                 <p className='footer-text'>
                     Built for readers • No paid reviews

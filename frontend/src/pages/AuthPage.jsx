@@ -79,7 +79,7 @@ function AuthPage() {
                     {/* Logo */}
                     <div className="auth-logo">
                         <IoBookSharp className="auth-logo-icon" />
-                        <span className="auth-logo-text">ZReads</span>
+                        <span className="auth-logo-text">BookMarked</span>
                     </div>
 
                     {/* Title */}
