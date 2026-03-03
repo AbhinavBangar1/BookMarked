@@ -108,6 +108,8 @@ router.get("/:userid", async (req, res) => {
         reviewid,
         review,
         createdat,
+        userid,
+        bookid,
         books:bookid (
           bookid,
           title,
@@ -115,7 +117,7 @@ router.get("/:userid", async (req, res) => {
         )
       `)
       .eq("userid", userid)
-      .order("createdat", { ascending: false, nullsFirst: false });
+      .order("createdat", { ascending: false });
 
     if (reviewError) {
       console.error("Reviews error:", reviewError);

@@ -20,13 +20,9 @@ const ProfilePage = () => {
   const [requests, setRequests] = useState([]);
   const [shelf, setShelf] = useState([]);
   const [shelfFilter, setShelfFilter] = useState("all");
-  
   const [bookRatings, setBookRatings] = useState({});
-
   const isOwnProfile = !userid || userid === user?.id;
-
   const isAlreadyFriend = friends.some(friend => friend.userid === user?.id);
-
   const availableTabs = isOwnProfile 
     ? ["reviews", "friends", "requests", "shelf"] 
     : ["reviews", "friends", "shelf"];
@@ -58,7 +54,6 @@ const ProfilePage = () => {
     }
   };
 
-
   useEffect(() => {
     const fetchRatingsForReviews = async () => {
       if (!reviews || !reviews.length || !session?.access_token) return;
@@ -87,7 +82,6 @@ const ProfilePage = () => {
         }
       }));
     };
-
     fetchRatingsForReviews();
   }, [reviews, session]);
 
@@ -98,7 +92,6 @@ const ProfilePage = () => {
         userId: user?.id,
         friendId: requesterId
       });
-
       const acceptedUser = requests.find((req) => req.userid === requesterId);
       setRequests((prevRequests) => prevRequests.filter((req) => req.userid !== requesterId));
 
@@ -305,7 +298,7 @@ const ProfilePage = () => {
               
               return (
                 <ReviewCard 
-                  key={`${review.userid || review.UserId}-${review.bookid || review.books?.bookid}`}
+                  key={`${review.userid}-${review.bookid}`}
                   reviewData={review} 
                   userRating={bookRatings[bId]} 
                 />
