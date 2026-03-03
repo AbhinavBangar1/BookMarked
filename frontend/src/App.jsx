@@ -22,7 +22,7 @@ function App() {
         <Route path="/" element={<Explore />} />
         <Route path="/genre" element={<Genre />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/book/:id" element={<BookProfile />} />
+        <Route path="/books/:id" element={<BookProfile />} />
         <Route path="/author/:id" element={<AuthorPage />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/profile/:userid" element={<ProfilePage />} />
