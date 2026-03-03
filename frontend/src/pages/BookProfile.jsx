@@ -97,6 +97,16 @@ function BookProfile() {
     checkAuth();
   }, []);
 
+  const requireLogin = (callback) => {
+    if (!isLoggedIn) {
+      toast.error("Please login first");
+      navigate("/auth");
+      return;
+    }
+
+    callback();
+  };
+
   useEffect(() => {
     async function fetchBookFromDB() {
       try {
