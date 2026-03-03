@@ -27,6 +27,7 @@ function BookProfile() {
   const [userRating, setUserRating] = useState(0);
 
   const [moreBooks, setMoreBooks] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   // New states for reviews and author
   const [reviews, setReviews] = useState([]);
@@ -362,7 +363,7 @@ function BookProfile() {
 
         const data = await res.json();
 
-        // Replace existing review by this user if exists
+        // Replace existing review by this user
         setReviews(prev => {
           const filtered = prev.filter(r => r.UserId !== currentUserId);
           return [data, ...filtered];
@@ -370,8 +371,8 @@ function BookProfile() {
 
         setNewReview("");
         setShowReviewForm(false);
+        setIsEditing(false); // 🔥 reset edit mode
 
-        // Refresh counts
         const reviewRes = await fetch(
           `https://bookmarked-527h.onrender.com/api/supabase/reviews/count?bookId=${id}`
         );
@@ -747,7 +748,7 @@ function BookProfile() {
               />
 
               <button type="submit" className="submit-review-btn">
-                {editingReviewId ? 'Update Review' : 'Submit Review'}
+                {isEditing ? "Update Review" : "Submit Review"}
               </button>
             </form>
           )}
@@ -790,13 +791,18 @@ function BookProfile() {
                       <div className="review-actions">
                         <button
                           className="review-action-btn edit"
-                          onClick={() => handleEditReview(review)}
+                          onClick={() => {
+                            setNewReview(review.Review);
+                            setIsEditing(true);
+                            setShowReviewForm(true);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
                         >
                           Edit
                         </button>
                         <button
                           className="review-action-btn delete"
-                          onClick={() => handleDeleteReview(review.ReviewId)}
+                          onClick={() => handleDeleteReview}
                         >
                           Delete
                         </button>
