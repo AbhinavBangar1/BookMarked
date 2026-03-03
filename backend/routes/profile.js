@@ -105,12 +105,11 @@ router.get("/:userid", async (req, res) => {
     const { data: reviewsRaw, error: reviewError } = await supabase
       .from("reviews")
       .select(`
-        reviewid,
         review,
         createdat,
         userid,
         bookid,
-        books:bookid (
+        books!fk_reviews_bookid (
           bookid,
           title,
           coverimage
