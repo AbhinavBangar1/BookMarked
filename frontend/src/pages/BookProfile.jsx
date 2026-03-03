@@ -98,80 +98,19 @@ function BookProfile() {
   }, []);
 
   useEffect(() => {
-    async function fetchBook() {
+    async function fetchBookFromDB() {
       try {
         setLoading(true);
 
-        let endpoint = "";
-        let isOpenLibrary = false;
-        let finalData = null;
+        const res = await fetch(
+          `https://bookmarked-527h.onrender.com/api/books/${id}`
+        );
 
-        if (source === "openlibrary") {
-          endpoint = `https://bookmarked-527h.onrender.com/api/openlibrary/book/${id}`;
-          isOpenLibrary = true;
-        }
-        else if (source === "bigbook") {
-          endpoint = `https://bookmarked-527h.onrender.com/api/bigbook/${id}`;
-          isOpenLibrary = true;
-        }
-        else if (source === "nyt" && stateBook) {
-          setBook({ data: stateBook, isOpenLibrary: false });
-          
-          if (id) {
-            fetch("https://bookmarked-527h.onrender.com/api/nyt/" + id)
-              .then(r => r.json())
-              .then(olData => {
-                const olId = olData?.key?.replace("/works/", "");
-                if (olId) {
-                  return fetch("https://bookmarked-527h.onrender.com/api/save-book", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ olId }),
-                  });
-                }
-              })
-              .then(r => r?.json())
-              .then(result => result && console.log("NYT Book saved to DB:", result.cached ? "already existed" : "newly inserted"))
-              .catch(err => console.error("Failed to save NYT book:", err));
-          }
-
-          setLoading(false);
-          return;
-        }
-        else if (source === "nyt" && !stateBook) {
-          endpoint = `https://bookmarked-527h.onrender.com/api/nyt/${id}`;
-          isOpenLibrary = true;
-        }
-        else {
-          if (id.startsWith("OL")) {
-            endpoint = `https://bookmarked-527h.onrender.com/api/openlibrary/book/${id}`;
-            isOpenLibrary = true;
-          } else {
-            endpoint = `https://bookmarked-527h.onrender.com/api/book/${id}`;
-          }
-        }
-
-        const res = await fetch(endpoint);
-        if (!res.ok) throw new Error("Failed to fetch book");
+        if (!res.ok) throw new Error("Book not found");
 
         const data = await res.json();
-        finalData = data;
-        setBook({ data: finalData, isOpenLibrary });
 
-        if (isOpenLibrary) {
-          const olId = finalData?.key?.replace("/works/", "") || (id?.startsWith("OL") ? id : null);
-
-          if (olId) {
-            fetch("https://bookmarked-527h.onrender.com/api/save-book", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                olId: olId,
-                isbn: finalData?.isbn_13?.[0] ?? finalData?.isbn_10?.[0] ?? null,
-              }),
-            }).catch(err => console.error("Failed to save book to DB:", err));
-          }
-        }
+        setBook(data);
 
       } catch (err) {
         console.error("Failed to fetch book", err);
@@ -180,8 +119,9 @@ function BookProfile() {
       }
     }
 
-    fetchBook();
-  }, [id, source, stateBook]);
+    fetchBookFromDB();
+  }, [id]);
+
 
   // Updated to fetch from /api/shelf
   useEffect(() => {
@@ -200,7 +140,7 @@ function BookProfile() {
         const data = await res.json();
 
         if (data.status) {
-          setStatus(data.status); // This matches DB value (e.g., 'currently reading')
+          setStatus(data.status);
         }
       } catch (err) {
         console.error('Failed to fetch shelf status', err);
@@ -210,66 +150,26 @@ function BookProfile() {
     fetchShelfStatus();
   }, [isLoggedIn, id, authToken]);
 
+
   const info = useMemo(() => {
-    if (!book?.data) return null;
-
-    const { data, isOpenLibrary } = book;
-
-    if (source === "nyt") {
-      return {
-        title: data.title,
-        authors: [data.author],
-        description: data.description,
-        image: data.book_image,
-        categories: [],
-        publishedDate: null,
-        pages: null,
-        publisher: data.publisher,
-        language: null,
-        isbn: data.primary_isbn13,
-        averageRating: null,
-        ratingsCount: null,
-      };
-    }
-
-    if (isOpenLibrary) {
-      return {
-        title: data.title,
-        authors: data.authors?.map(a => a.name) || [],
-        description:
-          typeof data.description === "string"
-            ? data.description
-            : data.description?.value,
-        image: data.covers?.length
-          ? `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg`
-          : null,
-        categories: data.subjects || [],
-        publishedDate: data.first_publish_date,
-        pages: data.number_of_pages,
-        publisher: data.publishers?.[0],
-        language: data.languages?.[0]?.key?.replace("/languages/", ""),
-        isbn: data.isbn_13?.[0] || data.isbn_10?.[0],
-        averageRating: null,
-        ratingsCount: null,
-      };
-    }
+    if (!book) return null;
 
     return {
-      title: data.volumeInfo?.title,
-      authors: data.volumeInfo?.authors || [],
-      description: data.volumeInfo?.description,
-      image: data.volumeInfo?.imageLinks?.thumbnail,
-      categories: data.volumeInfo?.categories || [],
-      publishedDate: data.volumeInfo?.publishedDate,
-      pages: data.volumeInfo?.pageCount,
-      publisher: data.volumeInfo?.publisher,
-      language: data.volumeInfo?.language,
-      isbn: data.volumeInfo?.industryIdentifiers?.[0]?.identifier,
-      averageRating: data.volumeInfo?.averageRating,
-      ratingsCount: data.volumeInfo?.ratingsCount,
+      title: book.title,
+      authors: [book.author?.name || "Unknown Author"],
+      description: book.description,
+      image: book.coverimage || "/placeholder-book.png",
+      categories: [book.genre?.genrename || "Uncategorized"],
+      publishedDate: book.publishedyear,
+      pages: null,
+      publisher: book.publisher,
+      language: null,
+      isbn: book.isbn,
+      averageRating: null,
+      ratingsCount: null,
     };
+  }, [book]);
 
-  }, [book, source]);
 
   useEffect(() => {
     if (!info) return;
@@ -317,69 +217,34 @@ function BookProfile() {
   }, [info, id]);
 
   useEffect(() => {
-    if (!info || !info.authors?.[0]) return;
-
-    async function fetchAuthorInfo() {
-      try {
-        const authorName = info.authors[0];
-        const res = await fetch(
-          `https://bookmarked-527h.onrender.com/api/author?name=${encodeURIComponent(authorName)}`
-        );
-        const data = await res.json();
-        setAuthorInfo(data);
-      } catch (err) {
-        console.error("Failed to fetch author info", err);
-      }
-    }
-
-    fetchAuthorInfo();
-  }, [info]);
-
-  useEffect(() => {
-    if (!info || info.authors.length === 0 || !book) return;
-
-    const author = info.authors[0];
-    const isOpenLibrary = book.isOpenLibrary;
+    if (!book?.author?.authorid) return;
 
     async function fetchMoreBooks() {
       try {
-        let books = [];
+        const res = await fetch(
+          `https://bookmarked-527h.onrender.com/api/author/${book.author.authorid}/books`
+        );
 
-        if (isOpenLibrary) {
-          const res = await fetch(
-            `https://openlibrary.org/search.json?author=${encodeURIComponent(author)}&limit=10`
-          );
-          const data = await res.json();
-
-          books =
-            data?.docs
-              ?.filter(b => b.cover_i && b.key && b.title !== info.title)
-              .slice(0, 6)
-              .map(b => ({
-                id: b.key.replace("/works/", ""),
-                title: b.title,
-                image: `https://covers.openlibrary.org/b/id/${b.cover_i}-M.jpg`,
-                genre: b.subject?.[0] || "Book",
-              })) || [];
-        } else {
-          const res = await fetch(
-            `https://bookmarked-527h.onrender.com/api/search?q=inauthor:${encodeURIComponent(author)}`
-          );
-          const data = await res.json();
-
-          books =
-            data?.items
-              ?.filter(b => b.volumeInfo?.imageLinks?.thumbnail)
-              .slice(0, 6)
-              .map(b => ({
-                id: b.id,
-                title: b.volumeInfo.title,
-                image: b.volumeInfo.imageLinks.thumbnail,
-                genre: b.volumeInfo.categories?.[0] || "Book",
-              })) || [];
+        if (!res.ok) {
+          setMoreBooks([]);
+          return;
         }
 
-        setMoreBooks(books);
+        const data = await res.json();
+
+        // Remove current book from list
+        const filtered = data
+          .filter(b => b.bookid !== book.bookid)
+          .slice(0, 6)
+          .map(b => ({
+            id: b.bookid,
+            title: b.title,
+            image: b.coverimage,
+            genre: b.genre?.genrename || "Book"
+          }));
+
+        setMoreBooks(filtered);
+
       } catch (err) {
         console.error("Failed to fetch more books", err);
         setMoreBooks([]);
@@ -387,17 +252,7 @@ function BookProfile() {
     }
 
     fetchMoreBooks();
-  }, [info, book]);
-
-  const requireLogin = (callback) => {
-    if (!isLoggedIn || !authToken) {
-      toast.error("Please sign in to continue");
-      navigate('/auth');
-      return false;
-    }
-    callback();
-    return true;
-  };
+  }, [book]);
 
   // Updated to point to /api/shelf
   const handleStatusChange = (newStatus) => {
@@ -711,7 +566,13 @@ function BookProfile() {
             <h1 className="profile-title">{info.title}</h1>
 
             <p className="authorr">
-              {info.authors.join(", ") || "Unknown Author"}
+              {book?.author ? (
+                <Link to={`/author/${book.author.authorid}`} className="author-link">
+                  {book.author.name}
+                </Link>
+              ) : (
+                "Unknown Author"
+              )}
             </p>
 
             {/* RATING STATISTICS */}
@@ -816,64 +677,44 @@ function BookProfile() {
         </div>
 
         {/* ABOUT THE AUTHOR */}
-        {authorInfo && (
+        {book?.author && (
           <div className="author-section">
             <h3 className="section-title">About the Author</h3>
 
             <div className="author-info">
-              {authorInfo.photos && (
-                <img
-                  className="author-image"
-                  src={`https://covers.openlibrary.org/a/olid/${authorInfo.key}-L.jpg`}
-                  alt={authorInfo.name}
-                />
-              )}
-
               <div className="author-details">
                 <h4 className="author-name">
-                  {authorInfo.name && authorInfo.key ? (
-                    <Link to={`/author/${authorInfo.key}`} className="author-link">
-                      {authorInfo.name}
-                    </Link>
-                  ) : (
-                    <span>{authorInfo.name || "Unknown Author"}</span>
-                  )}
+                  {book.author.name}
                 </h4>
-
-                <p className="author-meta">
-                  {authorInfo.birth_date}
-                  {authorInfo.death_date && ` – ${authorInfo.death_date}`}
-                </p>
-
-                <p className="author-bio">
-                  {authorInfo.bio || "No biography available."}
-                </p>
               </div>
             </div>
           </div>
         )}
 
         {/* MORE FROM AUTHOR */}
-        {moreBooks.length > 0 && (
-          <div className="more-books">
-            <h3 className="more-books-title">
-              More books by {info.authors[0]}
-            </h3>
+        <div className="more-books">
+          <h3 className="more-books-title">
+            More books by {book?.author?.name}
+          </h3>
+
+          {moreBooks.length > 0 ? (
             <div className="more-books-row">
-              {moreBooks
-                .filter(b => b.id)
-                .map(b => (
-                  <BookCard
-                    key={b.id}
-                    id={b.id}
-                    img={b.image}
-                    title={b.title}
-                    genre={b.genre}
-                  />
-                ))}
+              {moreBooks.map(b => (
+                <BookCard
+                  key={b.id}
+                  id={b.id}
+                  img={b.image}
+                  title={b.title}
+                  genre={b.genre}
+                />
+              ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="no-more-books-msg">
+              We don’t have more books from this author right now
+            </p>
+          )}
+        </div>
 
         {/* RATINGS AND REVIEWS - FULL WIDTH */}
         <div className="reviews-section">

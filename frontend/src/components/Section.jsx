@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import BookCard from './BookCard.jsx';
 import BookCardSkeleton from './BookCardSkeleton.jsx';
 
-// 1. We accept userBookmarkIds as a prop from the Explore page
 function Section({ type, section_title, userBookmarkIds = [] }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,12 +32,10 @@ function Section({ type, section_title, userBookmarkIds = [] }) {
 
       <div className="card-container">
         {loading
-          ? // Render Skeletons while loading
-            Array.from({ length: 15 }).map((_, i) => (
+          ?Array.from({ length: 15 }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))
-          : // Render actual BookCards when data arrives
-            books.map(book => (
+          : books.map(book => (
               <BookCard
                 key={book.bookid}
                 id={book.bookid}
@@ -46,8 +43,6 @@ function Section({ type, section_title, userBookmarkIds = [] }) {
                 title={book.title}
                 author={book.authors}
                 genre={book.genres}
-                // 2. We determine the bookmark status by checking if the ID 
-                //    exists in the userBookmarkIds array we received.
                 isBookmarked={userBookmarkIds.includes(book.bookid)}
               />
             ))}

@@ -26,27 +26,6 @@ function AuthorPage() {
         if (booksRes.ok) {
           const booksData = await booksRes.json();
           setBooks(booksData);
-
-          // 3. BACKGROUND TASK: Save new books to the database
-          if (booksData && booksData.length > 0) {
-            const savePromises = booksData.map((book) => {
-              const olId = book.id.replace("/works/", "");
-
-              return fetch("https://bookmarked-527h.onrender.com/api/save-book", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                // Passes coverImage to the payload so it saves in the DB
-                body: JSON.stringify({ olId, coverImage: book.image }),
-              }).catch((err) =>
-                console.error(`Failed to trigger save for book ${olId}:`, err)
-              );
-            });
-
-            // Run all saves concurrently without blocking the user interface
-            Promise.allSettled(savePromises).then(() => {
-              console.log("Background book sync complete.");
-            });
-          }
         }
       } catch (error) {
         console.error("Failed to fetch author data", error);

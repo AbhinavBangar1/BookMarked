@@ -105,7 +105,6 @@ router.get("/users", async (req, res) => {
 
     const searchQuery = q.trim().toLowerCase();
 
-    // Supabase query
     const { data, error } = await supabase
       .from("users")
       .select("userid, username, email, created_at")

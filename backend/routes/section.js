@@ -1,3 +1,5 @@
+// for Explore page Sections
+
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
 import redisClient from "../redisClient.js";

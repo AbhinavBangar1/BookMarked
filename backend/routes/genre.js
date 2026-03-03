@@ -1,3 +1,5 @@
+// For the genre page
+
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
 import redisClient from "../redisClient.js";
@@ -18,10 +20,10 @@ router.get("/", async (req, res) => {
     }
     const cacheKey = `genre:${genre.toLowerCase()}`;
     const cached = await redisClient.get(cacheKey);
-    // if (cached) {
-    //   console.log("Cache hit for genre:", genre);
-    //   return res.json(JSON.parse(cached));
-    // }
+    if (cached) {
+      console.log("Cache hit for genre:", genre);
+      return res.json(JSON.parse(cached));
+    }
 
       const { data, error } = await supabase
           .from("books")
