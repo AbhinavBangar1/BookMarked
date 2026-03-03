@@ -305,7 +305,7 @@ const ProfilePage = () => {
               
               return (
                 <ReviewCard 
-                  key={review.reviewid} 
+                  key={`${review.userid || review.UserId}-${review.bookid || review.books?.bookid}`}
                   reviewData={review} 
                   userRating={bookRatings[bId]} 
                 />

@@ -36,7 +36,6 @@ router.get("/", async (req, res) => {
     const { data, error } = await supabase
       .from("reviews")
       .select(`
-        reviewid,
         review,
         createdat,
         userid,
@@ -50,10 +49,9 @@ router.get("/", async (req, res) => {
     if (error) throw error;
 
     const formatted = data.map((r) => ({
-      ReviewId: r.reviewid,
+      UserId: r.userid,
       Review: r.review,
       CreatedAt: r.createdat,
-      UserId: r.userid,
       UserName: r.users?.username || "Anonymous"
     }));
 
@@ -72,14 +70,18 @@ router.post("/", requireAuth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("reviews")
-      .insert({
-        review,
-        userid: userId,
-        bookid: bookId,
-        createdat: new Date().toISOString()
-      })
+      .upsert(
+        {
+          userid: userId,
+          bookid: bookId,
+          review,
+          createdat: new Date().toISOString()
+        },
+        {
+          onConflict: ["userid", "bookid"]
+        }
+      )
       .select(`
-        reviewid,
         review,
         createdat,
         userid,
@@ -92,7 +94,6 @@ router.post("/", requireAuth, async (req, res) => {
     if (error) throw error;
 
     res.json({
-      ReviewId: data.reviewid,
       Review: data.review,
       CreatedAt: data.createdat,
       UserId: data.userid,
@@ -100,59 +101,58 @@ router.post("/", requireAuth, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Review create failed:", err);
+    console.error("Review upsert failed:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// PUT - Update existing review
-router.put("/:reviewId", requireAuth, async (req, res) => {
-  const userId = req.user.id;
-  const { reviewId } = req.params;
-  const { review } = req.body;
+// // PUT - Update existing review
+// router.put("/:reviewId", requireAuth, async (req, res) => {
+//   const userId = req.user.id;
+//   const { reviewId } = req.params;
+//   const { review } = req.body;
 
-  try {
-    const { data, error } = await supabase
-      .from("reviews")
-      .update({ review })
-      .eq("reviewid", reviewId)
-      .eq("userid", userId)
-      .select()
-      .single();
+//   try {
+//     const { data, error } = await supabase
+//       .from("reviews")
+//       .update({ review })
+//       .eq("userid", userId)
+//       .select()
+//       .single();
 
-    if (error) throw error;
+//     if (error) throw error;
 
-    if (!data) {
-      return res.status(404).json({
-        error: "Review not found or you don't have permission to edit it"
-      });
-    }
+//     if (!data) {
+//       return res.status(404).json({
+//         error: "Review not found or you don't have permission to edit it"
+//       });
+//     }
 
-    res.json({
-      message: "Review updated successfully",
-      data: {
-        ReviewId: data.reviewid,
-        Review: data.review
-      }
-    });
+//     res.json({
+//       message: "Review updated successfully",
+//       data: {
+//         ReviewId: data.reviewid,
+//         Review: data.review
+//       }
+//     });
 
-  } catch (err) {
-    console.error("Review update failed:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+//   } catch (err) {
+//     console.error("Review update failed:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
 // DELETE - Delete review
-router.delete("/:reviewId", requireAuth, async (req, res) => {
+router.delete("/", requireAuth, async (req, res) => {
   const userId = req.user.id;
-  const { reviewId } = req.params;
+  const { bookId } = req.query;
 
   try {
     const { error } = await supabase
       .from("reviews")
       .delete()
-      .eq("reviewid", reviewId)
-      .eq("userid", userId);
+      .eq("userid", userId)
+      .eq("bookid", bookId);
 
     if (error) throw error;
 

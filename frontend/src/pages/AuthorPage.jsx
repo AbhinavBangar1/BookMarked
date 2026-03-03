@@ -66,7 +66,7 @@ function AuthorPage() {
         <div className="author-profile-header">
           <div className="author-image-container">
             <img
-              src={`https://covers.openlibrary.org/a/olid/${id}-L.jpg`}
+              src={author.image}
               alt={author.name}
               className="author-profile-image"
               onError={(e) => {

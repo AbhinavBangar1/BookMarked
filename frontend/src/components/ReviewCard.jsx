@@ -8,19 +8,28 @@ const ReviewCard = ({ reviewData, userRating }) => {
   if (!reviewData || !reviewData.books) return null;
 
   const { review, books, createdat } = reviewData;
-  const bookId = reviewData.bookid || books.bookid; // Secure fallback
-  
-  const dateFormatted = createdat 
-    ? new Date(createdat).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) 
+
+  const bookId =
+    reviewData.bookid ||
+    reviewData.books?.bookid ||
+    null;
+
+  const dateFormatted = createdat
+    ? new Date(createdat).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric"
+      })
     : "Recently";
 
   return (
     <div className="aesthetic-card">
-      {/* FLOATING BOOK COVER */}
-      <div className="cover-anchor" onClick={() => navigate(`/book/${bookId}`)}>
-        <img 
-          src={books.coverimage || "https://placehold.co/300x450?text=No+Cover"} 
-          alt={books.title} 
+      <div
+        className="cover-anchor"
+        onClick={() => bookId && navigate(`/books/${bookId}`)}
+      >
+        <img
+          src={books.coverimage || "https://placehold.co/300x450?text=No+Cover"}
+          alt={books.title}
           className="floating-img"
         />
         <div className="glass-overlay">
@@ -28,23 +37,30 @@ const ReviewCard = ({ reviewData, userRating }) => {
         </div>
       </div>
 
-      {/* REFINED CONTENT */}
       <div className="card-body">
         <div className="card-top">
           <div className="book-info">
             <h4 className="title-text">{books.title}</h4>
             <span className="date-text">{dateFormatted}</span>
           </div>
-          
-          {/* DYNAMIC RATING TAG */}
+
           <div className="rating-tag">
-            <span className="star-mini" style={{ color: userRating ? 'inherit' : '#ccc' }}>★</span>
-            <span className="score-text">{userRating ? `${userRating}/5` : "No rating"}</span>
+            <span
+              className="star-mini"
+              style={{ color: userRating ? "inherit" : "#ccc" }}
+            >
+              ★
+            </span>
+            <span className="score-text">
+              {userRating ? `${userRating}/5` : "No rating"}
+            </span>
           </div>
         </div>
 
         <div className="review-snippet">
-          <p>“{review || "A journey of a thousand pages begins with a single vibe."}”</p>
+          <p>
+            “{review || "A journey of a thousand pages begins with a single vibe."}”
+          </p>
         </div>
 
         <div className="card-footer">
